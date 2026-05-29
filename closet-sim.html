@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Closet Sim — Left Bay</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: #111;
+  font-family: -apple-system, 'Helvetica Neue', sans-serif;
+  overflow: hidden;
+  height: 100vh;
+}
+#viewport { position: absolute; inset: 0; }
+
+#panel {
+  position: absolute;
+  top: 20px; right: 20px;
+  width: 268px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 22px 20px 18px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+}
+#step-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #aaa;
+  margin-bottom: 6px;
+}
+#step-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 8px;
+  line-height: 1.2;
+}
+#step-desc {
+  font-size: 12px;
+  color: #666;
+  line-height: 1.55;
+  margin-bottom: 16px;
+  min-height: 54px;
+}
+#action-btn {
+  width: 100%;
+  padding: 11px 14px;
+  background: #2B2B2B;
+  color: #fff;
+  border: none;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+#action-btn:hover:not(:disabled) { background: #444; }
+#action-btn:active:not(:disabled) { transform: scale(0.98); }
+#action-btn:disabled { background: #5C9E6A; cursor: default; }
+
+#checklist {
+  margin-top: 16px;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.check-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 11.5px;
+  color: #bbb;
+  transition: color 0.3s;
+}
+.check-item.done { color: #2B2B2B; }
+.check-item.active { color: #888; font-weight: 600; }
+.check-icon {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid #ddd;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px;
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+.check-item.done .check-icon {
+  background: #5C9E6A;
+  border-color: #5C9E6A;
+  color: #fff;
+}
+.check-item.active .check-icon {
+  border-color: #888;
+}
+
+#hint {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.55);
+  color: rgba(255,255,255,0.75);
+  font-size: 12px;
+  padding: 8px 18px;
+  border-radius: 20px;
+  pointer-events: none;
+  transition: opacity 1s;
+  white-space: nowrap;
+}
+#hint.fade { opacity: 0; }
+
+#title-badge {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.7);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 9px;
+  letter-spacing: -0.01em;
+}
+
+#dim-label {
+  position: absolute;
+  bottom: 22px;
+  right: 20px;
+  color: rgba(255,255,255,0.35);
+  font-size: 11px;
+  line-height: 1.6;
+  text-align: right;
+  pointer-events: none;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 3px;
+  background: #f0f0f0;
+  border-radius: 2px;
+  margin-bottom: 18px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: #5C9E6A;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+</style>
+</head>
+<body>
+
+<div id="viewport"></div>
+<div id="title-badge">Left Bay — Shelf Build Sim</div>
+
+<div id="panel">
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  <div id="step-badge">Step 1 of 7</div>
+  <div id="step-title">Explore the bay</div>
+  <div id="step-desc">Orbit with left-drag · scroll to zoom · right-drag to pan. This is your left pantry bay: 46" wide × 65" tall × 29.5" deep. The gray shelf at top is the existing divider.</div>
+  <button id="action-btn">Start building →</button>
+  <div id="checklist">
+    <div class="check-item active" data-key="tape">
+      <div class="check-icon"></div><span>Mark shelf lines</span>
+    </div>
+    <div class="check-item" data-key="studs">
+      <div class="check-icon"></div><span>Find studs</span>
+    </div>
+    <div class="check-item" data-key="paint">
+      <div class="check-icon"></div><span>Pre-paint cleats</span>
+    </div>
+    <div class="check-item" data-key="backCleats">
+      <div class="check-icon"></div><span>Install back cleats</span>
+    </div>
+    <div class="check-item" data-key="sideCleats">
+      <div class="check-icon"></div><span>Install side cleats</span>
+    </div>
+    <div class="check-item" data-key="shelves">
+      <div class="check-icon"></div><span>Drop shelves in</span>
+    </div>
+  </div>
+</div>
+
+<div id="hint">Drag to orbit &nbsp;·&nbsp; Scroll to zoom &nbsp;·&nbsp; Right-drag to pan</div>
+<div id="dim-label">46" × 65" × 29.5"<br>4 graduated shelves</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ─── DIMENSIONS (inches = units) ─────────────────────────────────────────────
+const W = 46, H = 65, D = 29.5;
+const SHELF_DEPTH = 16, SHELF_T = 0.75;
+const CLEAT_H = 1.5, CLEAT_T = 1.5, CLEAT_SIDE = 15, CLEAT_SETBACK = 1;
+
+// Heights from floor where each shelf surface rests
+const SHELF_Y = [22, 35, 46, 56];
+const ZONE_LABELS = [
+  'appliances · big bags',
+  'cereal · snack boxes',
+  'medium boxes · jugs',
+  'jars · sauces · oils',
+];
+
+// ─── RENDERER ────────────────────────────────────────────────────────────────
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.getElementById('viewport').appendChild(renderer.domElement);
+
+// ─── SCENE ───────────────────────────────────────────────────────────────────
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0e0e0e);
+scene.fog = new THREE.Fog(0x0e0e0e, 200, 500);
+
+// ─── CAMERA + CONTROLS ───────────────────────────────────────────────────────
+const camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.1, 2000);
+camera.position.set(72, 52, 100);
+camera.lookAt(0, 32, 14);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 32, 14);
+controls.enableDamping = true;
+controls.dampingFactor = 0.07;
+controls.minDistance = 15;
+controls.maxDistance = 250;
+controls.update();
+
+// ─── LIGHTING ────────────────────────────────────────────────────────────────
+scene.add(new THREE.AmbientLight(0xfff8f0, 0.55));
+
+const sun = new THREE.DirectionalLight(0xffffff, 0.7);
+sun.position.set(40, 120, 80);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+scene.add(sun);
+
+const fill = new THREE.DirectionalLight(0xd0e8ff, 0.3);
+fill.position.set(-60, 30, 80);
+scene.add(fill);
+
+// Warm interior point light
+const interiorLight = new THREE.PointLight(0xfff5e0, 1.2, 150);
+interiorLight.position.set(0, 60, 8);
+scene.add(interiorLight);
+
+// ─── MATERIALS ───────────────────────────────────────────────────────────────
+const wallMat  = new THREE.MeshLambertMaterial({ color: 0xF4F0EB, side: THREE.DoubleSide });
+const floorMat = new THREE.MeshLambertMaterial({ color: 0xBFA07A });
+const topMat   = new THREE.MeshLambertMaterial({ color: 0xC8C0B4 }); // existing shelf
+const shelfMat = new THREE.MeshLambertMaterial({ color: 0xD4B27A });
+const edgeMat2 = new THREE.MeshLambertMaterial({ color: 0xB8945A }); // shelf edge banding
+const cleatMat = new THREE.MeshLambertMaterial({ color: 0xE8E4DC }); // painted white
+const tapeMat  = new THREE.MeshBasicMaterial({ color: 0xF0C840, side: THREE.DoubleSide });
+const studMat  = new THREE.MeshLambertMaterial({ color: 0x9EB87A, transparent: true, opacity: 0.6 });
+const wireMat  = new THREE.LineBasicMaterial({ color: 0x3a3a3a });
+
+// ─── CLOSET SHELL ────────────────────────────────────────────────────────────
+function addPlane(w, h, mat, pos, rotY = 0) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+  m.rotation.y = rotY;
+  m.position.set(...pos);
+  m.receiveShadow = true;
+  scene.add(m);
+  return m;
+}
+
+addPlane(W, H, wallMat, [0, H/2, 0]);                        // back
+addPlane(D, H, wallMat, [-W/2, H/2, D/2],  Math.PI/2);      // left
+addPlane(D, H, wallMat, [ W/2, H/2, D/2], -Math.PI/2);      // right
+addPlane(W, D, floorMat, [0, 0, D/2], 0);                    // floor (will rotate)
+
+const floorMesh = new THREE.Mesh(new THREE.PlaneGeometry(W, D), floorMat);
+floorMesh.rotation.x = -Math.PI/2;
+floorMesh.position.set(0, 0, D/2);
+floorMesh.receiveShadow = true;
+scene.add(floorMesh);
+
+// Ceiling of the bay (existing shelf underside)
+const ceilMesh = new THREE.Mesh(new THREE.PlaneGeometry(W, D), topMat);
+ceilMesh.rotation.x = Math.PI/2;
+ceilMesh.position.set(0, H, D/2);
+scene.add(ceilMesh);
+
+// Existing shelf (visible block above)
+const topShelf = new THREE.Mesh(new THREE.BoxGeometry(W, 2, D), topMat);
+topShelf.position.set(0, H + 1, D/2);
+scene.add(topShelf);
+
+// ─── EDGE LINES ──────────────────────────────────────────────────────────────
+function line(p1, p2) {
+  const geo = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(...p1), new THREE.Vector3(...p2)
+  ]);
+  scene.add(new THREE.Line(geo, wireMat));
+}
+const hw = W/2;
+// vertical edges
+line([-hw,0,0],[-hw,H,0]); line([hw,0,0],[hw,H,0]);
+line([-hw,0,D],[-hw,H,D]); line([hw,0,D],[hw,H,D]);
+// horizontal edges
+line([-hw,0,0],[hw,0,0]); line([-hw,H,0],[hw,H,0]);
+line([-hw,0,D],[hw,0,D]); line([-hw,H,D],[hw,H,D]);
+// depth edges
+line([-hw,0,0],[-hw,0,D]); line([hw,0,0],[hw,0,D]);
+line([-hw,H,0],[-hw,H,D]); line([hw,H,0],[hw,H,D]);
+
+// ─── ANIMATABLE OBJECTS ──────────────────────────────────────────────────────
+const groups = { tape: [], studs: [], backCleats: [], sideCleats: [], shelves: [] };
+
+// Tape marks — thin strips on all 3 walls at each shelf height
+SHELF_Y.forEach(y => {
+  const th = 0.45; // tape height
+  [[W, 0, D/2, 0.06, 0], [D, -hw, D/2, 0, Math.PI/2], [D, hw, D/2, 0, -Math.PI/2]].forEach(([len, px, pz, pzOff, ry]) => {
+    const t = new THREE.Mesh(new THREE.PlaneGeometry(len, th), tapeMat.clone());
+    t.rotation.y = ry;
+    t.position.set(px, y, pz + pzOff);
+    t.visible = false;
+    scene.add(t);
+    groups.tape.push(t);
+  });
+});
+
+// Studs on back wall — at 16" OC within 46" bay
+// Corner studs at ±23, interior at -7 and +9
+[-23, -7, 9, 23].forEach(x => {
+  const s = new THREE.Mesh(new THREE.BoxGeometry(1.5, H, 0.4), studMat.clone());
+  s.position.set(x, H/2, 0.3);
+  s.visible = false;
+  scene.add(s);
+  groups.studs.push(s);
+});
+
+// Stud indicator markers (pencil X marks on wall — represented as thin discs)
+[-7, 9].forEach(x => {
+  SHELF_Y.forEach(y => {
+    const disc = new THREE.Mesh(
+      new THREE.CircleGeometry(0.6, 8),
+      new THREE.MeshBasicMaterial({ color: 0x555544 })
+    );
+    disc.position.set(x, y, 0.35);
+    disc.visible = false;
+    scene.add(disc);
+    groups.studs.push(disc);
+  });
+});
+
+// Back cleats — 46" wide, slide from front to back wall
+SHELF_Y.forEach((y, i) => {
+  const cleat = new THREE.Mesh(
+    new THREE.BoxGeometry(W - 1, CLEAT_H, CLEAT_T),
+    cleatMat.clone()
+  );
+  const restZ = CLEAT_T / 2 + 0.15;
+  cleat.position.set(0, y + CLEAT_H / 2, D + 15); // start outside
+  cleat.userData.targetZ = restZ;
+  cleat.visible = false;
+  scene.add(cleat);
+  groups.backCleats.push(cleat);
+
+  // Screws on back cleat (tiny cylinders)
+  [-7, 9].forEach(sx => {
+    const screw = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.22, 0.22, 0.5, 6),
+      new THREE.MeshLambertMaterial({ color: 0x888888 })
+    );
+    screw.rotation.x = Math.PI / 2; // point into wall
+    screw.position.set(sx, y + CLEAT_H / 2, 0.08);
+    screw.visible = false;
+    scene.add(screw);
+    groups.backCleats.push(screw); // piggyback visibility
+  });
+});
+
+// Side cleats — 15" long, slide in from outside
+SHELF_Y.forEach(y => {
+  // cleat sits at front: z = D - CLEAT_SETBACK - CLEAT_SIDE, rear edge at back
+  const cz = D - CLEAT_SETBACK - CLEAT_SIDE / 2;
+
+  // Left
+  const lc = new THREE.Mesh(new THREE.BoxGeometry(CLEAT_T, CLEAT_H, CLEAT_SIDE), cleatMat.clone());
+  lc.position.set(-hw - 14, y + CLEAT_H / 2, cz);
+  lc.userData.targetX = -hw + CLEAT_T / 2 + 0.15;
+  lc.visible = false;
+  scene.add(lc);
+  groups.sideCleats.push(lc);
+
+  // Right
+  const rc = new THREE.Mesh(new THREE.BoxGeometry(CLEAT_T, CLEAT_H, CLEAT_SIDE), cleatMat.clone());
+  rc.position.set(hw + 14, y + CLEAT_H / 2, cz);
+  rc.userData.targetX = hw - CLEAT_T / 2 - 0.15;
+  rc.visible = false;
+  scene.add(rc);
+  groups.sideCleats.push(rc);
+});
+
+// Shelves — drop from above
+SHELF_Y.forEach((y, i) => {
+  const restY = y + CLEAT_H + SHELF_T / 2;
+  const shelf = new THREE.Mesh(
+    new THREE.BoxGeometry(W, SHELF_T, SHELF_DEPTH),
+    shelfMat.clone()
+  );
+  // Edge banding on front face
+  const band = new THREE.Mesh(
+    new THREE.BoxGeometry(W, SHELF_T + 0.1, 0.12),
+    edgeMat2.clone()
+  );
+  band.position.set(0, 0, SHELF_DEPTH / 2 + 0.06);
+  shelf.add(band);
+
+  shelf.position.set(0, restY + 28 + i * 4, SHELF_DEPTH / 2);
+  shelf.userData.targetY = restY;
+  shelf.visible = false;
+  scene.add(shelf);
+  groups.shelves.push(shelf);
+});
+
+// ─── ANIMATION HELPERS ───────────────────────────────────────────────────────
+const tweens = [];
+
+function tween(obj, prop, from, to, duration, delay = 0, onDone = null) {
+  tweens.push({ obj, prop, from, to, duration, delay, elapsed: 0, onDone });
+}
+
+function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+function easeInQuad(t)   { return t * t; }
+
+function showInstant(key, delayStep = 80) {
+  groups[key].forEach((obj, i) => {
+    setTimeout(() => { obj.visible = true; }, i * delayStep);
+  });
+}
+
+function slideIn(key, axis, delayStep = 180) {
+  groups[key].forEach((obj, i) => {
+    if (!obj.userData['target' + axis.toUpperCase()]) return;
+    const start = obj.position[axis];
+    const end   = obj.userData['target' + axis.toUpperCase()];
+    setTimeout(() => {
+      obj.visible = true;
+      tween(obj.position, axis, start, end, 0.7, 0);
+    }, i * delayStep);
+  });
+}
+
+function dropShelves() {
+  groups.shelves.forEach((shelf, i) => {
+    const start = shelf.position.y;
+    const end   = shelf.userData.targetY;
+    setTimeout(() => {
+      shelf.visible = true;
+      let elapsed = 0;
+      tweens.push({
+        custom: true,
+        update(dt) {
+          elapsed = Math.min(elapsed + dt, 1.0);
+          const t = elapsed;
+          let y;
+          if (t < 0.78) {
+            y = start + (end - start) * easeInQuad(t / 0.78);
+          } else {
+            const bounce = Math.sin((t - 0.78) / 0.22 * Math.PI) * 1.2 * (1 - (t - 0.78) / 0.22);
+            y = end + bounce;
+          }
+          shelf.position.y = y;
+          return elapsed >= 1.0;
+        }
+      });
+    }, i * 380);
+  });
+}
+
+// ─── STEP DEFINITIONS ────────────────────────────────────────────────────────
+const STEPS = [
+  {
+    badge: 'Step 1 of 7', title: 'Explore the bay',
+    desc: 'Orbit with left-drag · scroll to zoom. This is your left pantry bay: 46" wide × 65" tall × 29.5" deep. Four graduated shelves will go below the existing divider shelf.',
+    btn: 'Start building →', key: null, action: null,
+  },
+  {
+    badge: 'Step 2 of 7', title: 'Mark shelf lines with tape',
+    desc: 'Painter\'s tape at 4 heights: 22", 35", 46", and 56" from floor. Mark all 3 walls — it gives you a visual line to level the cleats against.',
+    btn: 'Apply tape marks', key: 'tape',
+    action: () => showInstant('tape', 60),
+  },
+  {
+    badge: 'Step 3 of 7', title: 'Find & mark studs',
+    desc: 'Studs at 16" OC on the back wall. Back cleats must hit ≥ 2 studs each. Mark with pencil after scanning. Side cleats can use E-Z Ancors.',
+    btn: 'Reveal studs', key: 'studs',
+    action: () => showInstant('studs', 120),
+  },
+  {
+    badge: 'Step 4 of 7', title: 'Pre-paint the cleats',
+    desc: 'Paint all 12 cleats white before installing — much easier than painting in place. While wet: cut the 45° clip on the front-bottom corner of each side cleat.',
+    btn: 'Cleats painted ✓', key: 'paint', action: null,
+  },
+  {
+    badge: 'Step 5 of 7', title: 'Install back cleats',
+    desc: 'Each 46" back cleat is the leveling reference. Pre-drill, then drive #8 × 2½" screws into studs. Check level before tightening.',
+    btn: 'Slide back cleats in', key: 'backCleats',
+    action: () => slideIn('backCleats', 'z', 320),
+  },
+  {
+    badge: 'Step 6 of 7', title: 'Install side cleats',
+    desc: '15" side cleats flush with back cleat height. 1" setback from front edge. 2 screws each — anchors fine here. Check level against back cleat.',
+    btn: 'Slide side cleats in', key: 'sideCleats',
+    action: () => slideIn('sideCleats', 'x', 200),
+  },
+  {
+    badge: 'Step 7 of 7', title: 'Drop shelves in',
+    desc: '¾" plywood 46"×16". Iron-on edge banding on the front. No screws — they just sit on the cleats. Graduated heights: 9 / 10 / 11 / 13 / 22" zones.',
+    btn: 'Drop shelves in 🎉', key: 'shelves',
+    action: () => dropShelves(),
+  },
+];
+
+let currentStep = 0;
+const doneKeys = new Set();
+
+function updatePanel() {
+  const s = STEPS[currentStep];
+  document.getElementById('step-badge').textContent   = s.badge;
+  document.getElementById('step-title').textContent   = s.title;
+  document.getElementById('step-desc').textContent    = s.desc;
+  document.getElementById('action-btn').textContent   = s.btn;
+  document.getElementById('action-btn').disabled      = false;
+  document.getElementById('progress-fill').style.width = (currentStep / (STEPS.length - 1) * 100) + '%';
+
+  document.querySelectorAll('.check-item').forEach(el => {
+    const k = el.dataset.key;
+    el.classList.remove('done', 'active');
+    if (doneKeys.has(k)) {
+      el.classList.add('done');
+      el.querySelector('.check-icon').textContent = '✓';
+    } else if (k === s.key) {
+      el.classList.add('active');
+      el.querySelector('.check-icon').textContent = '';
+    } else {
+      el.querySelector('.check-icon').textContent = '';
+    }
+  });
+}
+
+document.getElementById('action-btn').addEventListener('click', () => {
+  const s = STEPS[currentStep];
+  if (s.action) s.action();
+  if (s.key) doneKeys.add(s.key);
+
+  if (currentStep < STEPS.length - 1) {
+    currentStep++;
+    updatePanel();
+  } else {
+    const btn = document.getElementById('action-btn');
+    btn.textContent = 'All built! 🎉';
+    btn.disabled = true;
+    document.getElementById('progress-fill').style.width = '100%';
+  }
+});
+
+// ─── RENDER LOOP ─────────────────────────────────────────────────────────────
+let last = performance.now();
+
+function animate(now) {
+  requestAnimationFrame(animate);
+  const dt = Math.min((now - last) / 1000, 0.05);
+  last = now;
+
+  // Process tweens
+  for (let i = tweens.length - 1; i >= 0; i--) {
+    const tw = tweens[i];
+    if (tw.custom) {
+      const done = tw.update(dt);
+      if (done) tweens.splice(i, 1);
+    } else {
+      tw.elapsed += dt;
+      if (tw.elapsed < tw.delay) continue;
+      const t = Math.min((tw.elapsed - tw.delay) / tw.duration, 1);
+      tw.obj[tw.prop] = tw.from + (tw.to - tw.from) * easeOutCubic(t);
+      if (t >= 1) {
+        tw.obj[tw.prop] = tw.to;
+        if (tw.onDone) tw.onDone();
+        tweens.splice(i, 1);
+      }
+    }
+  }
+
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+// ─── RESIZE ──────────────────────────────────────────────────────────────────
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+updatePanel();
+animate(performance.now());
+
+// Fade hint after 6s
+setTimeout(() => document.getElementById('hint').classList.add('fade'), 6000);
+</script>
+</body>
+</html>
