@@ -2,10 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Closet Sim — Left Bay</title>
 <style>
-* { margin:0; padding:0; box-sizing:border-box; }
-body { background:#111; font-family:-apple-system,'Helvetica Neue',sans-serif; overflow:hidden; height:100vh; }
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body { background:#111; font-family:-apple-system,'Helvetica Neue',sans-serif; overflow:hidden; height:100vh; height:100dvh; }
 #viewport { position:absolute; inset:0; }
 #viewport.drilling { cursor:crosshair; }
 #viewport.playmode { cursor:grab; }
@@ -64,6 +65,40 @@ body { background:#111; font-family:-apple-system,'Helvetica Neue',sans-serif; o
 #intro-start:hover { background:#444; }
 #intro-start:active { transform:scale(0.99); }
 #intro-card .controls { text-align:center; font-size:11.5px; color:#aaa; margin-top:14px; }
+
+/* ── Mobile: bottom-sheet panel, larger text, decluttered ── */
+@media (max-width: 640px) {
+  #panel {
+    top:auto; bottom:0; left:0; right:0; width:auto;
+    border-radius:20px 20px 0 0;
+    padding:18px 20px calc(18px + env(safe-area-inset-bottom));
+    box-shadow:0 -6px 30px rgba(0,0,0,0.45);
+  }
+  .progress-bar { margin-bottom:14px; }
+  #step-badge { font-size:12px; margin-bottom:7px; }
+  #step-title { font-size:22px; margin-bottom:9px; }
+  #step-desc { font-size:15.5px; line-height:1.5; min-height:0; margin-bottom:16px; }
+  .btn-row { gap:10px; }
+  #back-btn { padding:16px 20px; font-size:18px; }
+  #action-btn { padding:16px; font-size:16.5px; }
+  #checklist { display:none; }              /* save vertical space on phones */
+  #title-badge { display:none; }
+  #dim-label { display:none; }
+  #hint {
+    bottom:auto; top:calc(14px + env(safe-area-inset-top)); white-space:normal;
+    max-width:84vw; text-align:center; font-size:13px; line-height:1.4;
+  }
+  #toast { font-size:15px; padding:13px 22px; }
+  #drill-counter { margin-top:0; top:18%; font-size:14px; white-space:normal; max-width:84vw; text-align:center; }
+
+  #intro { padding:16px; align-items:flex-end; }
+  #intro-card { padding:26px 22px calc(24px + env(safe-area-inset-bottom)); border-radius:20px; }
+  #intro-card .eyebrow { font-size:12px; }
+  #intro-card h1 { font-size:26px; margin-bottom:12px; }
+  #intro-card p { font-size:16px; margin-bottom:18px; }
+  #intro-start { padding:16px; font-size:17px; }
+  #intro-card .controls { font-size:12.5px; }
+}
 </style>
 </head>
 <body>
@@ -150,11 +185,12 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0e0e0e);
 scene.fog = new THREE.Fog(0x0e0e0e, 280, 650);
 
+const isMobile = matchMedia('(max-width: 640px)').matches;
 const camera = new THREE.PerspectiveCamera(46, innerWidth/innerHeight, 0.1, 3000);
-camera.position.set(78, 78, 175);
+camera.position.set(...(isMobile ? [16, 64, 255] : [78, 78, 175]));
 
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(0, 50, 12);
+controls.target.set(...(isMobile ? [0, 52, 8] : [0, 50, 12]));
 controls.enableDamping = true;
 controls.dampingFactor = 0.07;
 controls.minDistance = 18;
@@ -429,13 +465,14 @@ function startDrilling(kind, onDone) {
 const toastEl = document.getElementById('toast'); let toastTimer = null;
 function toast(msg, kind){ toastEl.textContent = msg; toastEl.className = 'show '+kind; clearTimeout(toastTimer); toastTimer = setTimeout(()=>toastEl.className=kind, 1000); }
 const counterEl = document.getElementById('drill-counter');
-function updateCounter(n){ counterEl.textContent = n>0 ? `${n} screw${n>1?'s':''} left — click near the red rings` : ''; counterEl.classList.toggle('show', n>0); }
+function updateCounter(n){ counterEl.textContent = n>0 ? `${n} screw${n>1?'s':''} left — ${isMobile?'tap':'click'} near the red rings` : ''; counterEl.classList.toggle('show', n>0); }
 function hideCounter(){ counterEl.classList.remove('show'); }
 
 // ─── ACTIONS ─────────────────────────────────────────────────────────────────
 function openDoors() {
   tween(doorFront.position, 'x', doorFront.userData.openX, 1.4);
-  focusCamera([LB_CX+12, 46, 92], [LB_CX, 34, 12], 1.5);
+  if (isMobile) focusCamera([LB_CX, 48, 172], [LB_CX, 40, 8], 1.5);
+  else focusCamera([LB_CX+12, 46, 92], [LB_CX, 34, 12], 1.5);
 }
 function closeDoors() { doorFront.position.x = doorFront.userData.closedX; }
 
@@ -585,7 +622,7 @@ function render() {
   const s = STEPS[step];
   document.getElementById('step-badge').textContent = `Step ${step+1} of ${STEPS.length}`;
   document.getElementById('step-title').textContent = s.title;
-  document.getElementById('step-desc').textContent = s.desc;
+  document.getElementById('step-desc').textContent = isMobile ? s.desc.replace(/\bClick\b/g,'Tap').replace(/\bclick\b/g,'tap') : s.desc;
   actionBtn.textContent = s.btn; actionBtn.disabled = false; actionBtn.className = '';
   backBtn.disabled = step === 0;
   document.getElementById('progress-fill').style.width = (step/(STEPS.length-1)*100) + '%';
@@ -601,7 +638,7 @@ actionBtn.addEventListener('click', () => {
   const s = STEPS[step];
   if (s.interactive) {
     actionBtn.disabled = true; actionBtn.className = 'waiting';
-    actionBtn.textContent = 'Click near the rings…';
+    actionBtn.textContent = isMobile ? 'Tap near the rings…' : 'Click near the rings…';
     startDrilling(s.interactive, () => { toast('All cleats secured ✓', 'hit'); advance(); });
     return;
   }
@@ -619,7 +656,7 @@ function advance() {
     });
     playMode = true;
     viewport.classList.add('playmode');
-    focusCamera([8, 56, 185], [0, 46, 12], 1.3);   // pull back to frame whole closet + doors
+    focusCamera(isMobile ? [10, 60, 255] : [8, 56, 185], isMobile ? [0, 52, 8] : [0, 46, 12], 1.3);  // frame whole closet + doors
     showHint('Play mode — drag the doors to slide them open & closed');
   }
 }
@@ -635,7 +672,7 @@ function jumpTo(target) {
   step = target; render();
 }
 function replayInstant(i) {
-  if (i === 1) { doorFront.position.x = doorFront.userData.openX; controls.target.set(LB_CX, 34, 12); }
+  if (i === 1) { doorFront.position.x = doorFront.userData.openX; controls.target.set(LB_CX, isMobile ? 40 : 34, isMobile ? 8 : 12); }
   if (i === 2) tapeMarks.forEach(t => t.visible = true);
   if (i === 3) studMeshes.forEach(s => s.visible = true);
   if (i === 6) shelves.forEach(sh => { sh.visible = true; sh.position.y = sh.userData.targetY; });
@@ -702,6 +739,13 @@ setTimeout(() => document.getElementById('hint').classList.add('fade'), 6000);
 document.getElementById('intro-start').addEventListener('click', () => {
   document.getElementById('intro').classList.add('hidden');
 });
+
+// touch-friendly control wording on phones
+if (isMobile) {
+  const t = 'Drag to orbit · pinch to zoom · two fingers to pan';
+  document.querySelector('#intro-card .controls').textContent = t;
+  document.getElementById('hint').textContent = t;
+}
 
 // debug hook (harmless; handy for testing the play-mode interactions)
 window.__sim = {
