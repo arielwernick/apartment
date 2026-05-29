@@ -710,6 +710,10 @@ window.__sim = {
   doorScreen(which='back'){ const v = new THREE.Vector3();
     (which==='front'?doorFront:doorBack).getWorldPosition(v); v.project(camera);
     return [(v.x*0.5+0.5)*innerWidth, (-v.y*0.5+0.5)*innerHeight]; },
+  activeRings(){ const v = new THREE.Vector3();
+    return activeTargets.filter(t => !t.userData.placed).map(t => {
+      t.getWorldPosition(v); v.project(camera);
+      return [(v.x*0.5+0.5)*innerWidth, (-v.y*0.5+0.5)*innerHeight]; }); },
 };
 </script>
 </body>

@@ -2,3 +2,8 @@
 node_modules/
 *.log
 .claude/
+
+# generated demo media (regenerate with /tmp/record.mjs + ffmpeg)
+closet-demo.mp4
+closet-demo.gif
+*.webm
