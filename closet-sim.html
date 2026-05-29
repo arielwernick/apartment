@@ -740,11 +740,9 @@ const tourKeys = [
   { t:5.2,  p:[LB_CX-20, 42, 80], g:[LB_CX, 36, 12] },       // orbit left (drilling)
   { t:7.6,  p:[LB_CX+22, 46, 80], g:[LB_CX, 36, 12] },       // orbit right
   { t:9.6,  p:[LB_CX+4, 50, 92],  g:[LB_CX, 40, 11] },       // settle (shelves)
-  { t:12.0, p:[LB_CX+6, 46, 84],  g:[LB_CX, 38, 11] },       // push in (pantry)
-  { t:13.6, p:[LB_CX, 40, 98],    g:[LB_CX, 36, 12] },       // front-on for door finale
-  { t:16.4, p:[LB_CX-2, 41, 100], g:[LB_CX, 36, 12] },       // hold while doors close/open
-  { t:19.6, p:[55, 76, 206],      g:[0, 52, 10] },           // pull back to whole closet
-  { t:21.5, p:[40, 74, 206],      g:[0, 52, 10] },           // gentle hold on the full closet
+  { t:11.6, p:[LB_CX+6, 46, 84],  g:[LB_CX, 38, 11] },       // push in (pantry)
+  { t:13.6, p:[54, 74, 205],      g:[0, 52, 10] },           // zoom out to the whole closet
+  { t:17.4, p:[47, 72, 206],      g:[0, 52, 10] },           // hold wide while doors close & open
 ];
 function updateTourCam(dt) {
   tourClock += dt;
@@ -787,10 +785,10 @@ function startTour(){
   S(5200,  () => { setCaption('Drill back cleats'); tourDrill('back', 0); });
   S(6900,  () => { setCaption('Drill side cleats'); tourDrill('side', 0); });
   S(8800,  () => { dropShelves(); setCaption('Drop shelves in'); });
-  S(11200, () => { fillPantry(); setCaption('Stock the pantry'); });
-  S(13600, () => { setCaption(''); });
-  S(13900, () => { tween(doorFront.position, 'x', doorFront.userData.closedX, 1.1); });  // doors close
-  S(15400, () => { tween(doorFront.position, 'x', doorFront.userData.openX,   1.1); });  // doors open
+  S(11000, () => { fillPantry(); setCaption('Stock the pantry'); });
+  S(13300, () => { setCaption(''); });                                                   // zoomed out by now
+  S(14000, () => { tween(doorFront.position, 'x', doorFront.userData.closedX, 1.0); });  // doors close (wide)
+  S(15400, () => { tween(doorFront.position, 'x', doorFront.userData.openX,   1.0); });  // doors open (wide)
 }
 
 // ─── LOOP ────────────────────────────────────────────────────────────────────
