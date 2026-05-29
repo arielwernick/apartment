@@ -5,196 +5,88 @@
 <title>Closet Sim — Left Bay</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
-body {
-  background: #111;
-  font-family: -apple-system, 'Helvetica Neue', sans-serif;
-  overflow: hidden;
-  height: 100vh;
-}
-#viewport { position: absolute; inset: 0; }
+body { background:#111; font-family:-apple-system,'Helvetica Neue',sans-serif; overflow:hidden; height:100vh; }
+#viewport { position:absolute; inset:0; }
+#viewport.drilling { cursor:crosshair; }
+#viewport.playmode { cursor:grab; }
+#viewport.playmode.grabbing { cursor:grabbing; }
 
 #panel {
-  position: absolute;
-  top: 20px; right: 20px;
-  width: 268px;
-  background: #fff;
-  border-radius: 14px;
-  padding: 22px 20px 18px;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  position:absolute; top:20px; right:20px; width:272px;
+  background:#fff; border-radius:14px; padding:20px 20px 16px;
+  box-shadow:0 8px 40px rgba(0,0,0,0.5);
 }
-#step-badge {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #aaa;
-  margin-bottom: 6px;
-}
-#step-title {
-  font-size: 17px;
-  font-weight: 700;
-  color: #1a1a1a;
-  margin-bottom: 8px;
-  line-height: 1.2;
-}
-#step-desc {
-  font-size: 12px;
-  color: #666;
-  line-height: 1.55;
-  margin-bottom: 16px;
-  min-height: 54px;
-}
-#action-btn {
-  width: 100%;
-  padding: 11px 14px;
-  background: #2B2B2B;
-  color: #fff;
-  border: none;
-  border-radius: 9px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s, transform 0.1s;
-}
-#action-btn:hover:not(:disabled) { background: #444; }
-#action-btn:active:not(:disabled) { transform: scale(0.98); }
-#action-btn:disabled { background: #5C9E6A; cursor: default; }
+.progress-bar { width:100%; height:3px; background:#f0f0f0; border-radius:2px; margin-bottom:16px; overflow:hidden; }
+.progress-fill { height:100%; background:#5C9E6A; border-radius:2px; transition:width 0.4s ease; }
+#step-badge { font-size:10px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#aaa; margin-bottom:6px; }
+#step-title { font-size:17px; font-weight:700; color:#1a1a1a; margin-bottom:8px; line-height:1.2; }
+#step-desc { font-size:12px; color:#666; line-height:1.55; margin-bottom:14px; min-height:56px; }
+.btn-row { display:flex; gap:8px; }
+#back-btn { padding:11px 14px; background:#f2f2f2; color:#555; border:none; border-radius:9px; font-size:13px; font-weight:600; cursor:pointer; transition:background 0.15s; }
+#back-btn:hover:not(:disabled) { background:#e6e6e6; }
+#back-btn:disabled { opacity:0.4; cursor:default; }
+#action-btn { flex:1; padding:11px 14px; background:#2B2B2B; color:#fff; border:none; border-radius:9px; font-size:13px; font-weight:600; cursor:pointer; transition:background 0.15s, transform 0.1s; }
+#action-btn:hover:not(:disabled) { background:#444; }
+#action-btn:active:not(:disabled) { transform:scale(0.98); }
+#action-btn:disabled { background:#c8c8c8; cursor:default; }
+#action-btn.waiting { background:#C99A2E; }
 
-#checklist {
-  margin-top: 16px;
-  border-top: 1px solid #f0f0f0;
-  padding-top: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-.check-item {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  font-size: 11.5px;
-  color: #bbb;
-  transition: color 0.3s;
-}
-.check-item.done { color: #2B2B2B; }
-.check-item.active { color: #888; font-weight: 600; }
-.check-icon {
-  width: 16px; height: 16px;
-  border-radius: 50%;
-  border: 1.5px solid #ddd;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 9px;
-  flex-shrink: 0;
-  transition: all 0.3s;
-}
-.check-item.done .check-icon {
-  background: #5C9E6A;
-  border-color: #5C9E6A;
-  color: #fff;
-}
-.check-item.active .check-icon {
-  border-color: #888;
-}
+#checklist { margin-top:14px; border-top:1px solid #f0f0f0; padding-top:12px; display:flex; flex-direction:column; gap:7px; }
+.check-item { display:flex; align-items:center; gap:9px; font-size:11.5px; color:#bbb; transition:color 0.3s; cursor:pointer; }
+.check-item.done { color:#2B2B2B; }
+.check-item.active { color:#888; font-weight:600; }
+.check-icon { width:16px; height:16px; border-radius:50%; border:1.5px solid #ddd; display:flex; align-items:center; justify-content:center; font-size:9px; flex-shrink:0; transition:all 0.3s; }
+.check-item.done .check-icon { background:#5C9E6A; border-color:#5C9E6A; color:#fff; }
+.check-item.active .check-icon { border-color:#888; }
 
-#hint {
-  position: absolute;
-  bottom: 22px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0,0,0,0.55);
-  color: rgba(255,255,255,0.75);
-  font-size: 12px;
-  padding: 8px 18px;
-  border-radius: 20px;
-  pointer-events: none;
-  transition: opacity 1s;
-  white-space: nowrap;
-}
-#hint.fade { opacity: 0; }
+#title-badge { position:absolute; top:20px; left:20px; background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.7); font-size:12px; font-weight:600; padding:8px 14px; border-radius:9px; }
+#dim-label { position:absolute; bottom:22px; right:20px; color:rgba(255,255,255,0.35); font-size:11px; line-height:1.6; text-align:right; pointer-events:none; }
+#hint { position:absolute; bottom:22px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.55); color:rgba(255,255,255,0.75); font-size:12px; padding:8px 18px; border-radius:20px; pointer-events:none; transition:opacity 1s; white-space:nowrap; }
+#hint.fade { opacity:0; }
 
-#title-badge {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  background: rgba(255,255,255,0.08);
-  color: rgba(255,255,255,0.7);
-  font-size: 12px;
-  font-weight: 600;
-  padding: 8px 14px;
-  border-radius: 9px;
-  letter-spacing: -0.01em;
-}
-
-#dim-label {
-  position: absolute;
-  bottom: 22px;
-  right: 20px;
-  color: rgba(255,255,255,0.35);
-  font-size: 11px;
-  line-height: 1.6;
-  text-align: right;
-  pointer-events: none;
-}
-
-.progress-bar {
-  width: 100%;
-  height: 3px;
-  background: #f0f0f0;
-  border-radius: 2px;
-  margin-bottom: 18px;
-  overflow: hidden;
-}
-.progress-fill {
-  height: 100%;
-  background: #5C9E6A;
-  border-radius: 2px;
-  transition: width 0.4s ease;
-}
+#toast { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) scale(0.9); padding:14px 26px; border-radius:12px; font-size:14px; font-weight:600; color:#fff; pointer-events:none; opacity:0; transition:opacity 0.25s, transform 0.25s; box-shadow:0 8px 30px rgba(0,0,0,0.4); }
+#toast.show { opacity:1; transform:translate(-50%,-50%) scale(1); }
+#toast.hit { background:#4A9E5C; }
+#toast.miss { background:#C9622E; }
+#drill-counter { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); margin-top:-150px; color:#fff; font-size:13px; font-weight:600; background:rgba(0,0,0,0.5); padding:7px 16px; border-radius:20px; pointer-events:none; opacity:0; transition:opacity 0.3s; }
+#drill-counter.show { opacity:1; }
 </style>
 </head>
 <body>
 
 <div id="viewport"></div>
-<div id="title-badge">Left Bay — Shelf Build Sim</div>
+<div id="title-badge">Closet Build Sim — Left Bay</div>
 
 <div id="panel">
   <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
-  <div id="step-badge">Step 1 of 7</div>
-  <div id="step-title">Explore the bay</div>
-  <div id="step-desc">Orbit with left-drag · scroll to zoom · right-drag to pan. This is your left pantry bay: 46" wide × 65" tall × 29.5" deep. The gray shelf at top is the existing divider.</div>
-  <button id="action-btn">Start building →</button>
+  <div id="step-badge">Step 1 of 8</div>
+  <div id="step-title">Explore the closet</div>
+  <div id="step-desc"></div>
+  <div class="btn-row">
+    <button id="back-btn" disabled>←</button>
+    <button id="action-btn">Start →</button>
+  </div>
   <div id="checklist">
-    <div class="check-item active" data-key="tape">
-      <div class="check-icon"></div><span>Mark shelf lines</span>
-    </div>
-    <div class="check-item" data-key="studs">
-      <div class="check-icon"></div><span>Find studs</span>
-    </div>
-    <div class="check-item" data-key="paint">
-      <div class="check-icon"></div><span>Pre-paint cleats</span>
-    </div>
-    <div class="check-item" data-key="backCleats">
-      <div class="check-icon"></div><span>Install back cleats</span>
-    </div>
-    <div class="check-item" data-key="sideCleats">
-      <div class="check-icon"></div><span>Install side cleats</span>
-    </div>
-    <div class="check-item" data-key="shelves">
-      <div class="check-icon"></div><span>Drop shelves in</span>
-    </div>
+    <div class="check-item active" data-step="1"><div class="check-icon"></div><span>Move doors aside</span></div>
+    <div class="check-item" data-step="2"><div class="check-icon"></div><span>Mark shelf lines</span></div>
+    <div class="check-item" data-step="3"><div class="check-icon"></div><span>Find studs</span></div>
+    <div class="check-item" data-step="4"><div class="check-icon"></div><span>Drill back cleats</span></div>
+    <div class="check-item" data-step="5"><div class="check-icon"></div><span>Drill side cleats</span></div>
+    <div class="check-item" data-step="6"><div class="check-icon"></div><span>Drop shelves in</span></div>
+    <div class="check-item" data-step="7"><div class="check-icon"></div><span>Stock the pantry</span></div>
   </div>
 </div>
 
 <div id="hint">Drag to orbit &nbsp;·&nbsp; Scroll to zoom &nbsp;·&nbsp; Right-drag to pan</div>
-<div id="dim-label">46" × 65" × 29.5"<br>4 graduated shelves</div>
+<div id="dim-label">Closet 92" × 99" × 29.5"<br>Left bay 46" × 65" · 4 shelves</div>
+<div id="toast"></div>
+<div id="drill-counter"></div>
 
 <script type="importmap">
-{
-  "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
-  }
-}
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+}}
 </script>
 
 <script type="module">
@@ -202,421 +94,594 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 // ─── DIMENSIONS (inches = units) ─────────────────────────────────────────────
-const W = 46, H = 65, D = 29.5;
-const SHELF_DEPTH = 16, SHELF_T = 0.75;
-const CLEAT_H = 1.5, CLEAT_T = 1.5, CLEAT_SIDE = 15, CLEAT_SETBACK = 1;
+const FW = 92, FH = 99, D = 29.5;       // full closet
+const DIV_T = 1.5;                       // center divider thickness
+const LOWER_H = 65;                      // lower section / bay height
+const SHELF65 = 65, SHELF_UPPER = 82;    // full-width shelf heights
+const SHELF_DEPTH = 22, SHELF_T = 0.75;
+const CLEAT_H = 1.5, CLEAT_T = 1.5, CLEAT_SIDE = 20, CLEAT_SETBACK = 1;
+const OPENING_W = 59.25;                  // doorway opening (inset, centered)
+const RETURN_W = (FW - OPENING_W) / 2;    // wall return each side ≈ 16.375"
 
-// Heights from floor where each shelf surface rests
-const SHELF_Y = [22, 35, 46, 56];
-const ZONE_LABELS = [
-  'appliances · big bags',
-  'cereal · snack boxes',
-  'medium boxes · jugs',
-  'jars · sauces · oils',
-];
+// Left bay geometry (interior, in world x)
+const LB_LEFT = -FW/2;                    // -46
+const LB_RIGHT = -DIV_T/2;                // -0.75
+const LBW = LB_RIGHT - LB_LEFT;           // 45.25
+const LB_CX = (LB_LEFT + LB_RIGHT)/2;     // -23.375
+const hw = LBW/2;                         // local half-width
+
+// Shelf surface heights (from floor) within the bay
+const SHELF_Y = [21, 34, 45, 54];
 
 // ─── RENDERER ────────────────────────────────────────────────────────────────
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.setSize(window.innerWidth, window.innerHeight);
+const renderer = new THREE.WebGLRenderer({ antialias:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-document.getElementById('viewport').appendChild(renderer.domElement);
+const viewport = document.getElementById('viewport');
+viewport.appendChild(renderer.domElement);
 
-// ─── SCENE ───────────────────────────────────────────────────────────────────
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0e0e0e);
-scene.fog = new THREE.Fog(0x0e0e0e, 200, 500);
+scene.fog = new THREE.Fog(0x0e0e0e, 280, 650);
 
-// ─── CAMERA + CONTROLS ───────────────────────────────────────────────────────
-const camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.1, 2000);
-camera.position.set(72, 52, 100);
-camera.lookAt(0, 32, 14);
+const camera = new THREE.PerspectiveCamera(46, innerWidth/innerHeight, 0.1, 3000);
+camera.position.set(78, 78, 175);
 
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(0, 32, 14);
+controls.target.set(0, 50, 12);
 controls.enableDamping = true;
 controls.dampingFactor = 0.07;
-controls.minDistance = 15;
-controls.maxDistance = 250;
+controls.minDistance = 18;
+controls.maxDistance = 480;
 controls.update();
 
 // ─── LIGHTING ────────────────────────────────────────────────────────────────
-scene.add(new THREE.AmbientLight(0xfff8f0, 0.55));
-
+scene.add(new THREE.AmbientLight(0xfff8f0, 0.6));
 const sun = new THREE.DirectionalLight(0xffffff, 0.7);
-sun.position.set(40, 120, 80);
-sun.castShadow = true;
+sun.position.set(60, 160, 110); sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
 scene.add(sun);
-
-const fill = new THREE.DirectionalLight(0xd0e8ff, 0.3);
-fill.position.set(-60, 30, 80);
-scene.add(fill);
-
-// Warm interior point light
-const interiorLight = new THREE.PointLight(0xfff5e0, 1.2, 150);
-interiorLight.position.set(0, 60, 8);
-scene.add(interiorLight);
+const fillL = new THREE.DirectionalLight(0xd0e8ff, 0.3);
+fillL.position.set(-80, 40, 110); scene.add(fillL);
+const interior = new THREE.PointLight(0xfff5e0, 1.3, 240);
+interior.position.set(LB_CX, 70, 12); scene.add(interior);
 
 // ─── MATERIALS ───────────────────────────────────────────────────────────────
-const wallMat  = new THREE.MeshLambertMaterial({ color: 0xF4F0EB, side: THREE.DoubleSide });
-const floorMat = new THREE.MeshLambertMaterial({ color: 0xBFA07A });
-const topMat   = new THREE.MeshLambertMaterial({ color: 0xC8C0B4 }); // existing shelf
-const shelfMat = new THREE.MeshLambertMaterial({ color: 0xD4B27A });
-const edgeMat2 = new THREE.MeshLambertMaterial({ color: 0xB8945A }); // shelf edge banding
-const cleatMat = new THREE.MeshLambertMaterial({ color: 0xE8E4DC }); // painted white
-const tapeMat  = new THREE.MeshBasicMaterial({ color: 0xF0C840, side: THREE.DoubleSide });
-const studMat  = new THREE.MeshLambertMaterial({ color: 0x9EB87A, transparent: true, opacity: 0.6 });
-const wireMat  = new THREE.LineBasicMaterial({ color: 0x3a3a3a });
+const wallMat  = new THREE.MeshLambertMaterial({ color:0xF4F0EB, side:THREE.DoubleSide });
+const floorMat = new THREE.MeshLambertMaterial({ color:0xBFA07A });
+const structMat= new THREE.MeshLambertMaterial({ color:0xC8C0B4 });  // divider, fixed shelves
+const shelfMat = new THREE.MeshLambertMaterial({ color:0xD4B27A });
+const edgeMat  = new THREE.MeshLambertMaterial({ color:0xB8945A });
+const doorMat  = new THREE.MeshLambertMaterial({ color:0xDED9CE, transparent:true, opacity:0.92 });
+const returnMat= new THREE.MeshLambertMaterial({ color:0xD8D2C6, transparent:true, opacity:0.5, side:THREE.DoubleSide });
+const doorFrameMat = new THREE.MeshLambertMaterial({ color:0xB9B2A2 });
+const cleatGhost = new THREE.MeshLambertMaterial({ color:0xA8744A, transparent:true, opacity:0.4 });
+const cleatSolid = new THREE.MeshLambertMaterial({ color:0xA8744A });
+const tapeMat  = new THREE.MeshBasicMaterial({ color:0xF0C840, side:THREE.DoubleSide });
+const studMat  = new THREE.MeshLambertMaterial({ color:0x9EB87A, transparent:true, opacity:0.5 });
+const screwMat = new THREE.MeshLambertMaterial({ color:0x8a8a8a });
+const wireMat  = new THREE.LineBasicMaterial({ color:0x3a3a3a });
+const ringMat  = () => new THREE.MeshBasicMaterial({ color:0xE74C3C });
 
-// ─── CLOSET SHELL ────────────────────────────────────────────────────────────
-function addPlane(w, h, mat, pos, rotY = 0) {
+// ─── FULL CLOSET SHELL ───────────────────────────────────────────────────────
+function plane(w, h, mat, pos, rot=[0,0,0]) {
   const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
-  m.rotation.y = rotY;
-  m.position.set(...pos);
-  m.receiveShadow = true;
-  scene.add(m);
-  return m;
+  m.rotation.set(...rot); m.position.set(...pos); m.receiveShadow = true;
+  scene.add(m); return m;
 }
+plane(FW, FH, wallMat, [0, FH/2, 0]);                          // back
+plane(D, FH, wallMat, [-FW/2, FH/2, D/2], [0, Math.PI/2, 0]);  // left outer
+plane(D, FH, wallMat, [ FW/2, FH/2, D/2], [0,-Math.PI/2, 0]);  // right outer
+plane(FW, D, floorMat, [0, 0, D/2], [-Math.PI/2, 0, 0]);       // floor
+plane(FW, D, structMat,[0, FH, D/2], [ Math.PI/2, 0, 0]);      // ceiling
 
-addPlane(W, H, wallMat, [0, H/2, 0]);                        // back
-addPlane(D, H, wallMat, [-W/2, H/2, D/2],  Math.PI/2);      // left
-addPlane(D, H, wallMat, [ W/2, H/2, D/2], -Math.PI/2);      // right
-addPlane(W, D, floorMat, [0, 0, D/2], 0);                    // floor (will rotate)
+// Center divider (lower section only, 0–65")
+const divider = new THREE.Mesh(new THREE.BoxGeometry(DIV_T, LOWER_H, D), structMat);
+divider.position.set(0, LOWER_H/2, D/2);
+scene.add(divider);
 
-const floorMesh = new THREE.Mesh(new THREE.PlaneGeometry(W, D), floorMat);
-floorMesh.rotation.x = -Math.PI/2;
-floorMesh.position.set(0, 0, D/2);
-floorMesh.receiveShadow = true;
-scene.add(floorMesh);
+// Full-width fixed shelves
+function fixedShelf(y) {
+  const s = new THREE.Mesh(new THREE.BoxGeometry(FW, 1.5, D), structMat);
+  s.position.set(0, y, D/2); scene.add(s); return s;
+}
+fixedShelf(SHELF65);     // existing 65" shelf (top of the bays)
+fixedShelf(SHELF_UPPER); // upper long shelf
 
-// Ceiling of the bay (existing shelf underside)
-const ceilMesh = new THREE.Mesh(new THREE.PlaneGeometry(W, D), topMat);
-ceilMesh.rotation.x = Math.PI/2;
-ceilMesh.position.set(0, H, D/2);
-scene.add(ceilMesh);
+// Front wall returns — solid facade each side of the 59.25" doorway opening
+function frontReturn(cx) {
+  const r = new THREE.Mesh(new THREE.BoxGeometry(RETURN_W, FH, 1.5), returnMat);
+  r.position.set(cx, FH/2, D - 0.75);
+  scene.add(r);
+}
+frontReturn(-FW/2 + RETURN_W/2);  // left return  (covers x -46 … -29.625)
+frontReturn( FW/2 - RETURN_W/2);  // right return (covers x  29.625 … 46)
 
-// Existing shelf (visible block above)
-const topShelf = new THREE.Mesh(new THREE.BoxGeometry(W, 2, D), topMat);
-topShelf.position.set(0, H + 1, D/2);
-scene.add(topShelf);
-
-// ─── EDGE LINES ──────────────────────────────────────────────────────────────
+// Outer wireframe
 function line(p1, p2) {
-  const geo = new THREE.BufferGeometry().setFromPoints([
-    new THREE.Vector3(...p1), new THREE.Vector3(...p2)
-  ]);
-  scene.add(new THREE.Line(geo, wireMat));
+  const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(...p1), new THREE.Vector3(...p2)]);
+  scene.add(new THREE.Line(g, wireMat));
 }
-const hw = W/2;
-// vertical edges
-line([-hw,0,0],[-hw,H,0]); line([hw,0,0],[hw,H,0]);
-line([-hw,0,D],[-hw,H,D]); line([hw,0,D],[hw,H,D]);
-// horizontal edges
-line([-hw,0,0],[hw,0,0]); line([-hw,H,0],[hw,H,0]);
-line([-hw,0,D],[hw,0,D]); line([-hw,H,D],[hw,H,D]);
-// depth edges
-line([-hw,0,0],[-hw,0,D]); line([hw,0,0],[hw,0,D]);
-line([-hw,H,0],[-hw,H,D]); line([hw,H,0],[hw,H,D]);
+const FX = FW/2;
+[[-FX,0,0,-FX,FH,0],[FX,0,0,FX,FH,0],[-FX,0,D,-FX,FH,D],[FX,0,D,FX,FH,D],
+ [-FX,0,0,FX,0,0],[-FX,FH,0,FX,FH,0],[-FX,0,D,FX,0,D],[-FX,FH,D,FX,FH,D],
+ [-FX,0,0,-FX,0,D],[FX,0,0,FX,0,D],[-FX,FH,0,-FX,FH,D],[FX,FH,0,FX,FH,D]]
+ .forEach(c => line([c[0],c[1],c[2]],[c[3],c[4],c[5]]));
 
-// ─── ANIMATABLE OBJECTS ──────────────────────────────────────────────────────
-const groups = { tape: [], studs: [], backCleats: [], sideCleats: [], shelves: [] };
+// ─── SLIDING DOORS ───────────────────────────────────────────────────────────
+const PANEL_W = 31, PANEL_H = FH - 3;   // bypass panels in the 59.25" opening; ~3" header gap at top
+function makeDoor(centerX, z) {
+  const g = new THREE.Group();
+  const panel = new THREE.Mesh(new THREE.BoxGeometry(PANEL_W, PANEL_H, 0.7), doorMat);
+  g.add(panel);
+  // frame edges
+  const fr = new THREE.Mesh(new THREE.BoxGeometry(PANEL_W, PANEL_H, 0.9),
+    new THREE.MeshBasicMaterial({ color:0x9a9485, wireframe:true }));
+  g.add(fr);
+  // handle
+  const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,0.3,12), doorFrameMat);
+  handle.rotation.x = Math.PI/2;
+  handle.position.set(centerX > 0 ? -PANEL_W/2+3 : PANEL_W/2-3, 0, 0.5);
+  g.add(handle);
+  g.position.set(centerX, PANEL_H/2, z);   // bottom at floor, top ~3" below ceiling
+  scene.add(g);
+  return g;
+}
+const doorFront = makeDoor(-14.125, D - 0.8);  // left panel, front track
+const doorBack  = makeDoor( 14.125, D - 2.3);  // right panel, back track
+doorFront.userData = { closedX:-14.125, openX: 14.125 };  // slide right to expose left bay
+doorBack.userData  = { closedX: 14.125, openX: 14.125 };
 
-// Tape marks — thin strips on all 3 walls at each shelf height
+// ─── LEFT BAY BUILD GROUP (local coords centered on bay) ─────────────────────
+const bay = new THREE.Group();
+bay.position.set(LB_CX, 0, 0);
+scene.add(bay);
+
+const tapeMarks = [], studMeshes = [], drivenScrews = [];
+const cleatRows = [];  // { back,left,right, targets[] }
+const shelves = [];
+
+// Tape marks on 3 walls of the bay
 SHELF_Y.forEach(y => {
-  const th = 0.45; // tape height
-  [[W, 0, D/2, 0.06, 0], [D, -hw, D/2, 0, Math.PI/2], [D, hw, D/2, 0, -Math.PI/2]].forEach(([len, px, pz, pzOff, ry]) => {
-    const t = new THREE.Mesh(new THREE.PlaneGeometry(len, th), tapeMat.clone());
-    t.rotation.y = ry;
-    t.position.set(px, y, pz + pzOff);
-    t.visible = false;
-    scene.add(t);
-    groups.tape.push(t);
-  });
+  const th = 0.45;
+  // back wall (full bay width)
+  let t = new THREE.Mesh(new THREE.PlaneGeometry(LBW, th), tapeMat.clone());
+  t.position.set(0, y, 0.06); t.visible=false; bay.add(t); tapeMarks.push(t);
+  // left wall
+  t = new THREE.Mesh(new THREE.PlaneGeometry(D, th), tapeMat.clone());
+  t.rotation.y = Math.PI/2; t.position.set(-hw, y, D/2); t.visible=false; bay.add(t); tapeMarks.push(t);
+  // divider (right) face
+  t = new THREE.Mesh(new THREE.PlaneGeometry(D, th), tapeMat.clone());
+  t.rotation.y = -Math.PI/2; t.position.set(hw, y, D/2); t.visible=false; bay.add(t); tapeMarks.push(t);
 });
 
-// Studs on back wall — at 16" OC within 46" bay
-// Corner studs at ±23, interior at -7 and +9
-[-23, -7, 9, 23].forEach(x => {
-  const s = new THREE.Mesh(new THREE.BoxGeometry(1.5, H, 0.4), studMat.clone());
-  s.position.set(x, H/2, 0.3);
-  s.visible = false;
-  scene.add(s);
-  groups.studs.push(s);
+// Studs on back wall (16" OC). Two interior studs are drill targets.
+const STUD_X = [-18, -7, 9, 20];
+STUD_X.forEach(x => {
+  const s = new THREE.Mesh(new THREE.BoxGeometry(1.5, FH*0.66, 0.4), studMat.clone());
+  s.position.set(x, LOWER_H/2, 0.22); s.visible=false; bay.add(s); studMeshes.push(s);
 });
 
-// Stud indicator markers (pencil X marks on wall — represented as thin discs)
-[-7, 9].forEach(x => {
-  SHELF_Y.forEach(y => {
-    const disc = new THREE.Mesh(
-      new THREE.CircleGeometry(0.6, 8),
-      new THREE.MeshBasicMaterial({ color: 0x555544 })
-    );
-    disc.position.set(x, y, 0.35);
-    disc.visible = false;
-    scene.add(disc);
-    groups.studs.push(disc);
-  });
-});
+function ringAt(x, y, z, faceY=false) {
+  const r = new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.14, 8, 22), ringMat());
+  if (faceY) r.rotation.y = Math.PI/2;
+  r.position.set(x, y, z); r.visible=false; bay.add(r); return r;
+}
+function makeScrew(local, axis) {
+  const s = new THREE.Mesh(new THREE.CylinderGeometry(0.22,0.22,0.8,8), screwMat);
+  if (axis === 'z') s.rotation.x = Math.PI/2; else s.rotation.z = Math.PI/2;
+  s.position.copy(local); bay.add(s); drivenScrews.push(s);
+}
 
-// Back cleats — 46" wide, slide from front to back wall
 SHELF_Y.forEach((y, i) => {
-  const cleat = new THREE.Mesh(
-    new THREE.BoxGeometry(W - 1, CLEAT_H, CLEAT_T),
-    cleatMat.clone()
-  );
-  const restZ = CLEAT_T / 2 + 0.15;
-  cleat.position.set(0, y + CLEAT_H / 2, D + 15); // start outside
-  cleat.userData.targetZ = restZ;
-  cleat.visible = false;
-  scene.add(cleat);
-  groups.backCleats.push(cleat);
+  const cy = y + CLEAT_H/2;
+  const row = { targets:[] };
 
-  // Screws on back cleat (tiny cylinders)
-  [-7, 9].forEach(sx => {
-    const screw = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.22, 0.22, 0.5, 6),
-      new THREE.MeshLambertMaterial({ color: 0x888888 })
-    );
-    screw.rotation.x = Math.PI / 2; // point into wall
-    screw.position.set(sx, y + CLEAT_H / 2, 0.08);
-    screw.visible = false;
-    scene.add(screw);
-    groups.backCleats.push(screw); // piggyback visibility
+  row.back = new THREE.Mesh(new THREE.BoxGeometry(LBW-1, CLEAT_H, CLEAT_T), cleatGhost.clone());
+  row.back.position.set(0, cy, CLEAT_T/2 + 0.15); row.back.visible=false; bay.add(row.back);
+
+  // Side cleats run under the shelf, same depth span (shelf spans z 0…SHELF_DEPTH)
+  const cz = SHELF_DEPTH/2;
+  row.left = new THREE.Mesh(new THREE.BoxGeometry(CLEAT_T, CLEAT_H, CLEAT_SIDE), cleatGhost.clone());
+  row.left.position.set(-hw + CLEAT_T/2 + 0.15, cy, cz); row.left.visible=false; bay.add(row.left);
+  row.right = new THREE.Mesh(new THREE.BoxGeometry(CLEAT_T, CLEAT_H, CLEAT_SIDE), cleatGhost.clone());
+  row.right.position.set(hw - CLEAT_T/2 - 0.15, cy, cz); row.right.visible=false; bay.add(row.right);
+
+  // back targets: the 2 interior studs
+  [-7, 9].forEach(x => {
+    const r = ringAt(x, cy, 0.4);
+    r.userData = { kind:'back', row:i, placed:false, screwAxis:'z', screwPos:new THREE.Vector3(x, cy, 0.12) };
+    row.targets.push(r);
   });
+  // side targets: 2 per side cleat
+  [[-hw+0.35, cz-6],[-hw+0.35, cz+6]].forEach(([x,z]) => {
+    const r = ringAt(x, cy, z, true);
+    r.userData = { kind:'side', row:i, placed:false, screwAxis:'x', screwPos:new THREE.Vector3(x-0.2, cy, z) };
+    row.targets.push(r);
+  });
+  [[hw-0.35, cz-6],[hw-0.35, cz+6]].forEach(([x,z]) => {
+    const r = ringAt(x, cy, z, true);
+    r.userData = { kind:'side', row:i, placed:false, screwAxis:'x', screwPos:new THREE.Vector3(x+0.2, cy, z) };
+    row.targets.push(r);
+  });
+
+  cleatRows.push(row);
+
+  // Shelf (drops onto cleats)
+  const restY = y + CLEAT_H + SHELF_T/2;
+  const shelf = new THREE.Mesh(new THREE.BoxGeometry(LBW, SHELF_T, SHELF_DEPTH), shelfMat.clone());
+  const band = new THREE.Mesh(new THREE.BoxGeometry(LBW, SHELF_T+0.1, 0.12), edgeMat.clone());
+  band.position.set(0, 0, SHELF_DEPTH/2 + 0.06); shelf.add(band);
+  shelf.position.set(0, restY + 34 + i*4, SHELF_DEPTH/2);
+  shelf.userData.targetY = restY; shelf.visible=false; bay.add(shelf);
+  shelves.push(shelf);
 });
 
-// Side cleats — 15" long, slide in from outside
-SHELF_Y.forEach(y => {
-  // cleat sits at front: z = D - CLEAT_SETBACK - CLEAT_SIDE, rear edge at back
-  const cz = D - CLEAT_SETBACK - CLEAT_SIDE / 2;
-
-  // Left
-  const lc = new THREE.Mesh(new THREE.BoxGeometry(CLEAT_T, CLEAT_H, CLEAT_SIDE), cleatMat.clone());
-  lc.position.set(-hw - 14, y + CLEAT_H / 2, cz);
-  lc.userData.targetX = -hw + CLEAT_T / 2 + 0.15;
-  lc.visible = false;
-  scene.add(lc);
-  groups.sideCleats.push(lc);
-
-  // Right
-  const rc = new THREE.Mesh(new THREE.BoxGeometry(CLEAT_T, CLEAT_H, CLEAT_SIDE), cleatMat.clone());
-  rc.position.set(hw + 14, y + CLEAT_H / 2, cz);
-  rc.userData.targetX = hw - CLEAT_T / 2 - 0.15;
-  rc.visible = false;
-  scene.add(rc);
-  groups.sideCleats.push(rc);
-});
-
-// Shelves — drop from above
-SHELF_Y.forEach((y, i) => {
-  const restY = y + CLEAT_H + SHELF_T / 2;
-  const shelf = new THREE.Mesh(
-    new THREE.BoxGeometry(W, SHELF_T, SHELF_DEPTH),
-    shelfMat.clone()
-  );
-  // Edge banding on front face
-  const band = new THREE.Mesh(
-    new THREE.BoxGeometry(W, SHELF_T + 0.1, 0.12),
-    edgeMat2.clone()
-  );
-  band.position.set(0, 0, SHELF_DEPTH / 2 + 0.06);
-  shelf.add(band);
-
-  shelf.position.set(0, restY + 28 + i * 4, SHELF_DEPTH / 2);
-  shelf.userData.targetY = restY;
-  shelf.visible = false;
-  scene.add(shelf);
-  groups.shelves.push(shelf);
-});
-
-// ─── ANIMATION HELPERS ───────────────────────────────────────────────────────
+// ─── TWEEN ENGINE ────────────────────────────────────────────────────────────
 const tweens = [];
+function tween(obj, prop, to, dur, ease=easeOutCubic) { tweens.push({ obj, prop, from:obj[prop], to, dur, t:0, ease }); }
+function easeOutCubic(t){ return 1 - Math.pow(1-t, 3); }
+function easeInOut(t){ return t<0.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2; }
+function easeInQuad(t){ return t*t; }
 
-function tween(obj, prop, from, to, duration, delay = 0, onDone = null) {
-  tweens.push({ obj, prop, from, to, duration, delay, elapsed: 0, onDone });
+// Camera focus tween (lerp position + target together)
+function focusCamera(camTo, tgtTo, dur=1.2) {
+  const p0 = camera.position.clone(), t0 = controls.target.clone();
+  const p1 = new THREE.Vector3(...camTo), t1 = new THREE.Vector3(...tgtTo);
+  let e = 0;
+  tweens.push({ custom:true, update(dt){
+    e = Math.min(e + dt/dur, 1); const k = easeInOut(e);
+    camera.position.lerpVectors(p0, p1, k);
+    controls.target.lerpVectors(t0, t1, k);
+    return e >= 1;
+  }});
 }
 
-function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
-function easeInQuad(t)   { return t * t; }
+// ─── DRILL INTERACTION (screen-space nearest, forgiving) ─────────────────────
+let drillActive = false, activeTargets = [], onAllDrilled = null, downPos = null;
+const _v = new THREE.Vector3();
 
-function showInstant(key, delayStep = 80) {
-  groups[key].forEach((obj, i) => {
-    setTimeout(() => { obj.visible = true; }, i * delayStep);
+renderer.domElement.addEventListener('pointerdown', e => {
+  downPos = { x:e.clientX, y:e.clientY };
+  if (playMode && e.button === 0) tryStartDoorDrag(e.clientX, e.clientY);
+});
+renderer.domElement.addEventListener('pointermove', e => {
+  if (playMode && dragDoor) doDoorDrag(e.clientX, e.clientY);
+});
+renderer.domElement.addEventListener('pointerup', e => {
+  if (playMode) endDoorDrag();
+  if (!drillActive || !downPos) { downPos = null; return; }
+  const moved = Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y);
+  downPos = null;
+  if (moved > 6) return;          // it was an orbit drag
+  drillClick(e.clientX, e.clientY);
+});
+
+function drillClick(px, py) {
+  let best = null, bestDist = Infinity;
+  for (const t of activeTargets) {
+    if (t.userData.placed) continue;
+    t.getWorldPosition(_v); _v.project(camera);
+    if (_v.z > 1) continue;       // behind camera
+    const sx = (_v.x*0.5+0.5)*innerWidth, sy = (-_v.y*0.5+0.5)*innerHeight;
+    const d = Math.hypot(sx-px, sy-py);
+    if (d < bestDist) { bestDist = d; best = t; }
+  }
+  if (best && bestDist < 110) placeScrew(best);   // generous radius
+}
+
+function placeScrew(ring) {
+  ring.userData.placed = true; ring.visible = false;
+  makeScrew(ring.userData.screwPos, ring.userData.screwAxis);
+  const row = cleatRows[ring.userData.row];
+  solidify(row);
+  toast(ring.userData.kind === 'back' ? 'Stud hit — solid ✓' : 'Anchor set ✓', 'hit');
+  const remaining = activeTargets.filter(t => !t.userData.placed).length;
+  updateCounter(remaining);
+  if (remaining === 0) {
+    drillActive = false; viewport.classList.remove('drilling'); hideCounter();
+    if (onAllDrilled) onAllDrilled();
+  }
+}
+function solidify(row) {
+  if (row.targets.filter(t=>t.userData.kind==='back').every(t=>t.userData.placed)) row.back.material = cleatSolid;
+  if (row.targets.filter(t=>t.userData.kind==='side').every(t=>t.userData.placed)) { row.left.material = cleatSolid; row.right.material = cleatSolid; }
+}
+function startDrilling(kind, onDone) {
+  activeTargets = [];
+  cleatRows.forEach(row => {
+    if (kind==='back') row.back.visible = true;
+    if (kind==='side') { row.left.visible = true; row.right.visible = true; }
+    row.targets.filter(t=>t.userData.kind===kind).forEach(t => { t.visible = true; activeTargets.push(t); });
   });
+  drillActive = true; onAllDrilled = onDone;
+  viewport.classList.add('drilling');
+  updateCounter(activeTargets.length);
 }
 
-function slideIn(key, axis, delayStep = 180) {
-  groups[key].forEach((obj, i) => {
-    if (!obj.userData['target' + axis.toUpperCase()]) return;
-    const start = obj.position[axis];
-    const end   = obj.userData['target' + axis.toUpperCase()];
-    setTimeout(() => {
-      obj.visible = true;
-      tween(obj.position, axis, start, end, 0.7, 0);
-    }, i * delayStep);
-  });
+// ─── UI FEEDBACK ─────────────────────────────────────────────────────────────
+const toastEl = document.getElementById('toast'); let toastTimer = null;
+function toast(msg, kind){ toastEl.textContent = msg; toastEl.className = 'show '+kind; clearTimeout(toastTimer); toastTimer = setTimeout(()=>toastEl.className=kind, 1000); }
+const counterEl = document.getElementById('drill-counter');
+function updateCounter(n){ counterEl.textContent = n>0 ? `${n} screw${n>1?'s':''} left — click near the red rings` : ''; counterEl.classList.toggle('show', n>0); }
+function hideCounter(){ counterEl.classList.remove('show'); }
+
+// ─── ACTIONS ─────────────────────────────────────────────────────────────────
+function openDoors() {
+  tween(doorFront.position, 'x', doorFront.userData.openX, 1.4);
+  focusCamera([LB_CX+12, 46, 92], [LB_CX, 34, 12], 1.5);
 }
+function closeDoors() { doorFront.position.x = doorFront.userData.closedX; }
 
 function dropShelves() {
-  groups.shelves.forEach((shelf, i) => {
-    const start = shelf.position.y;
-    const end   = shelf.userData.targetY;
+  shelves.forEach((shelf, i) => {
+    const start = shelf.userData.targetY + 34 + i*4, end = shelf.userData.targetY;
     setTimeout(() => {
-      shelf.visible = true;
-      let elapsed = 0;
-      tweens.push({
-        custom: true,
-        update(dt) {
-          elapsed = Math.min(elapsed + dt, 1.0);
-          const t = elapsed;
-          let y;
-          if (t < 0.78) {
-            y = start + (end - start) * easeInQuad(t / 0.78);
-          } else {
-            const bounce = Math.sin((t - 0.78) / 0.22 * Math.PI) * 1.2 * (1 - (t - 0.78) / 0.22);
-            y = end + bounce;
-          }
-          shelf.position.y = y;
-          return elapsed >= 1.0;
-        }
-      });
-    }, i * 380);
+      shelf.visible = true; shelf.position.y = start; let e = 0;
+      tweens.push({ custom:true, update(dt){
+        e = Math.min(e + dt, 1); let y;
+        if (e<0.78) y = start + (end-start)*easeInQuad(e/0.78);
+        else { const b = Math.sin((e-0.78)/0.22*Math.PI)*1.2*(1-(e-0.78)/0.22); y = end+b; }
+        shelf.position.y = y; return e>=1;
+      }});
+    }, i*360);
   });
 }
 
-// ─── STEP DEFINITIONS ────────────────────────────────────────────────────────
+// ─── PANTRY ITEMS ────────────────────────────────────────────────────────────
+const pantryItems = [];
+const lam = (color, opts={}) => new THREE.MeshLambertMaterial(Object.assign({ color }, opts));
+function easeOutBack(t){ const c1=1.70158, c3=c1+1; return 1 + c3*Math.pow(t-1,3) + c1*Math.pow(t-1,2); }
+function popIn(mesh, delay){
+  mesh.scale.setScalar(0.001);
+  setTimeout(() => { let e=0; tweens.push({ custom:true, update(dt){
+    e = Math.min(e + dt/0.4, 1); mesh.scale.setScalar(Math.max(0.001, easeOutBack(e))); return e>=1;
+  }}); }, delay);
+}
+// item factories (local origin ≈ centered, bottom at -h/2 unless noted)
+function can(c){ return new THREE.Mesh(new THREE.CylinderGeometry(1.3,1.3,4,16), lam(c)); }
+function spice(c){ return new THREE.Mesh(new THREE.CylinderGeometry(0.7,0.7,3,12), lam(c)); }
+function boxItem(c,w,h,d){ return new THREE.Mesh(new THREE.BoxGeometry(w,h,d), lam(c)); }
+function jarItem(c){ const g=new THREE.Group();
+  const b=new THREE.Mesh(new THREE.CylinderGeometry(1,1.1,3,14), lam(c));
+  const l=new THREE.Mesh(new THREE.CylinderGeometry(1.02,1.02,0.5,14), lam(0x3a3a3a)); l.position.y=1.6;
+  g.add(b,l); return g; }
+function jug(c){ const g=new THREE.Group();
+  const b=new THREE.Mesh(new THREE.CylinderGeometry(1.6,1.6,5.5,16), lam(c));
+  const n=new THREE.Mesh(new THREE.CylinderGeometry(0.55,0.55,1.2,12), lam(c)); n.position.y=3.2;
+  g.add(b,n); return g; }
+function popItem(h){ const g=new THREE.Group();      // OXO Pop: clear body + white lid
+  const b=new THREE.Mesh(new THREE.BoxGeometry(3,h,3), lam(0xDCEAF0,{transparent:true, opacity:0.45}));
+  const l=new THREE.Mesh(new THREE.BoxGeometry(3.3,0.9,3.3), lam(0xF5F5F0)); l.position.y=h/2-0.3;
+  g.add(b,l); return g; }
+function utensils(){ const g=new THREE.Group();      // caddy of plastic utensils
+  const cup=new THREE.Mesh(new THREE.CylinderGeometry(1.6,1.4,3.5,16), lam(0xCDB59A)); g.add(cup);
+  const cols=[0xE0533B,0x3B7FE0,0x44A85A,0xE0A93B,0x8A4FC4];
+  for(let k=0;k<5;k++){ const s=new THREE.Mesh(new THREE.BoxGeometry(0.3,4,0.3), lam(cols[k]));
+    s.position.set((k-2)*0.5, 2.3, (k%2)*0.4-0.2); s.rotation.z=(k-2)*0.06; g.add(s); }
+  return g; }
+function appliance(c,w,h,d){ return new THREE.Mesh(new THREE.BoxGeometry(w,h,d), lam(c)); }
+
+function addItem(mesh, x, z, h, shelfY){ mesh.position.set(x, shelfY + h/2, z); bay.add(mesh); pantryItems.push(mesh); }
+
+function fillPantry(){
+  if (pantryItems.length) return;
+  const surf = i => SHELF_Y[i] + CLEAT_H + SHELF_T;   // shelf top surface
+  // tuples: [kind, x, z, ...extra]   (x,z are bay-local; accessible window ≈ -5…21)
+  const layouts = [
+    [ ['app',-1,8,0xE8E4DA,9,9,8], ['app',10,7,0x3A3A3A,7,8,7], ['box',18,8,0xC9A24B,6,10,5] ],
+    [ ['box',-3,7,0xD2553F,5,9,3], ['box',2,7,0xE0A93B,5,9,3], ['box',7,7,0x4F7FB0,5,9,3], ['pop',13,7], ['pop',18,7] ],
+    [ ['box',-3,7,0x6CA06C,5,7,3], ['box',2,7,0xB05C9E,5,7,3], ['jug',8,7,0xE8E4DA], ['jug',13,7,0xC9A24B], ['box',18,8,0xD2A24B,5,6,4] ],
+    [ ['can',-4,6,0xC0392B], ['can',-1,6,0x2C7A4B], ['can',2,6,0xCDA434], ['jar',6,6,0xE8C16A], ['jar',9,6,0x9B5A3C],
+      ['spice',12,6,0xD2553F], ['spice',14,6,0xE0A93B], ['spice',16,6,0x6CA06C], ['uten',20,6] ],
+  ];
+  let delay = 0;
+  layouts.forEach((items, i) => {
+    const y = surf(i);
+    items.forEach(([kind, x, z, ...a]) => {
+      let mesh, h;
+      if (kind==='can'){ mesh=can(a[0]); h=4; }
+      else if (kind==='spice'){ mesh=spice(a[0]); h=3; }
+      else if (kind==='jar'){ mesh=jarItem(a[0]); h=3; }
+      else if (kind==='jug'){ mesh=jug(a[0]); h=5.5; }
+      else if (kind==='pop'){ mesh=popItem(7); h=7; }
+      else if (kind==='uten'){ mesh=utensils(); h=3.5; }
+      else if (kind==='box'){ mesh=boxItem(a[0],a[1],a[2],a[3]); h=a[2]; }
+      else { mesh=appliance(a[0],a[1],a[2],a[3]); h=a[2]; }   // app
+      addItem(mesh, x, z, h, y);
+      popIn(mesh, delay); delay += 100;
+    });
+  });
+}
+
+// ─── PLAY MODE: DRAGGABLE DOORS ──────────────────────────────────────────────
+let playMode = false, dragDoor = null, dragOffset = 0;
+const DOOR_MIN = -14.125, DOOR_MAX = 14.125;
+const dragPlane = new THREE.Plane(), dragPt = new THREE.Vector3();
+const raycaster = new THREE.Raycaster(), mouse = new THREE.Vector2();
+function screenToRay(px, py){ mouse.x=(px/innerWidth)*2-1; mouse.y=-(py/innerHeight)*2+1; raycaster.setFromCamera(mouse, camera); }
+function tryStartDoorDrag(px, py){
+  screenToRay(px, py);
+  const hits = raycaster.intersectObjects([doorFront, doorBack], true);
+  if (!hits.length) return false;
+  let o = hits[0].object; while (o.parent && o!==doorFront && o!==doorBack) o = o.parent;
+  dragDoor = o;
+  dragPlane.setFromNormalAndCoplanarPoint(new THREE.Vector3(0,0,1), dragDoor.position);
+  dragOffset = raycaster.ray.intersectPlane(dragPlane, dragPt) ? dragPt.x - dragDoor.position.x : 0;
+  controls.enabled = false;
+  viewport.classList.add('grabbing');
+  return true;
+}
+function doDoorDrag(px, py){
+  if (!dragDoor) return;
+  screenToRay(px, py);
+  if (raycaster.ray.intersectPlane(dragPlane, dragPt))
+    dragDoor.position.x = Math.max(DOOR_MIN, Math.min(DOOR_MAX, dragPt.x - dragOffset));
+}
+function endDoorDrag(){ if (dragDoor){ dragDoor = null; controls.enabled = true; viewport.classList.remove('grabbing'); } }
+
+const hintEl = document.getElementById('hint');
+function showHint(txt){ hintEl.textContent = txt; hintEl.classList.remove('fade'); }
+
+// ─── STEPS ───────────────────────────────────────────────────────────────────
 const STEPS = [
-  {
-    badge: 'Step 1 of 7', title: 'Explore the bay',
-    desc: 'Orbit with left-drag · scroll to zoom. This is your left pantry bay: 46" wide × 65" tall × 29.5" deep. Four graduated shelves will go below the existing divider shelf.',
-    btn: 'Start building →', key: null, action: null,
-  },
-  {
-    badge: 'Step 2 of 7', title: 'Mark shelf lines with tape',
-    desc: 'Painter\'s tape at 4 heights: 22", 35", 46", and 56" from floor. Mark all 3 walls — it gives you a visual line to level the cleats against.',
-    btn: 'Apply tape marks', key: 'tape',
-    action: () => showInstant('tape', 60),
-  },
-  {
-    badge: 'Step 3 of 7', title: 'Find & mark studs',
-    desc: 'Studs at 16" OC on the back wall. Back cleats must hit ≥ 2 studs each. Mark with pencil after scanning. Side cleats can use E-Z Ancors.',
-    btn: 'Reveal studs', key: 'studs',
-    action: () => showInstant('studs', 120),
-  },
-  {
-    badge: 'Step 4 of 7', title: 'Pre-paint the cleats',
-    desc: 'Paint all 12 cleats white before installing — much easier than painting in place. While wet: cut the 45° clip on the front-bottom corner of each side cleat.',
-    btn: 'Cleats painted ✓', key: 'paint', action: null,
-  },
-  {
-    badge: 'Step 5 of 7', title: 'Install back cleats',
-    desc: 'Each 46" back cleat is the leveling reference. Pre-drill, then drive #8 × 2½" screws into studs. Check level before tightening.',
-    btn: 'Slide back cleats in', key: 'backCleats',
-    action: () => slideIn('backCleats', 'z', 320),
-  },
-  {
-    badge: 'Step 6 of 7', title: 'Install side cleats',
-    desc: '15" side cleats flush with back cleat height. 1" setback from front edge. 2 screws each — anchors fine here. Check level against back cleat.',
-    btn: 'Slide side cleats in', key: 'sideCleats',
-    action: () => slideIn('sideCleats', 'x', 200),
-  },
-  {
-    badge: 'Step 7 of 7', title: 'Drop shelves in',
-    desc: '¾" plywood 46"×16". Iron-on edge banding on the front. No screws — they just sit on the cleats. Graduated heights: 9 / 10 / 11 / 13 / 22" zones.',
-    btn: 'Drop shelves in 🎉', key: 'shelves',
-    action: () => dropShelves(),
-  },
+  { title:'Explore the closet',
+    desc:'The full closet: 92" W × 99" H × 29.5" D. A center divider splits the lower 65" into two bays. We\'re building out the left bay. Orbit · scroll · right-drag to pan.',
+    btn:'Start →' },
+  { title:'Slide the doors aside',
+    desc:'Slide the left sliding door over to the right to fully expose the left bay (you\'d move both panels to the right side to work). The camera moves in to focus on the bay.',
+    btn:'Slide doors right →', action:openDoors },
+  { title:'Mark shelf lines with tape',
+    desc:'Painter\'s tape at 4 heights — 22", 35", 46", 56" from the floor — on all 3 walls of the bay. Gives a level line to register each cleat against.',
+    btn:'Apply tape marks', action(){ tapeMarks.forEach((t,i)=>setTimeout(()=>t.visible=true, i*45)); } },
+  { title:'Find & mark studs',
+    desc:'Studs at 16" OC on the back wall (green). The two interior studs are your drill targets — back cleats must catch ≥ 2 studs. Mark them in pencil.',
+    btn:'Reveal studs', action(){ studMeshes.forEach((s,i)=>setTimeout(()=>s.visible=true, i*90)); } },
+  { title:'Drill the back cleats',
+    desc:'Now you drill. Each 46" back cleat catches the two interior studs. Click near a red ring to drive a #8 × 2½" screw — it snaps to the closest one. Cleat turns solid when both are in.',
+    btn:'Drill them myself →', interactive:'back' },
+  { title:'Drill the side cleats',
+    desc:'15" side cleats, flush with the back-cleat height, 1" setback from the front edge. 2 screws each — E-Z Ancors are fine in drywall here. Click near the rings.',
+    btn:'Drill them myself →', interactive:'side' },
+  { title:'Drop shelves in',
+    desc:'¾" plywood, 46" × 22" deep, with iron-on edge banding on the front. No fasteners — they rest on the cleats.',
+    btn:'Drop shelves in', action:dropShelves },
+  { title:'Stock the pantry',
+    desc:'Load it up — appliances & big bags on the bottom, cereal boxes and OXO Pop canisters mid, jugs & boxes above, cans / jars / spices and a utensil caddy up top.',
+    btn:'Fill the shelves 🥫', action:fillPantry },
 ];
 
-let currentStep = 0;
-const doneKeys = new Set();
+let step = 0;
+const actionBtn = document.getElementById('action-btn');
+const backBtn = document.getElementById('back-btn');
 
-function updatePanel() {
-  const s = STEPS[currentStep];
-  document.getElementById('step-badge').textContent   = s.badge;
-  document.getElementById('step-title').textContent   = s.title;
-  document.getElementById('step-desc').textContent    = s.desc;
-  document.getElementById('action-btn').textContent   = s.btn;
-  document.getElementById('action-btn').disabled      = false;
-  document.getElementById('progress-fill').style.width = (currentStep / (STEPS.length - 1) * 100) + '%';
-
+function render() {
+  const s = STEPS[step];
+  document.getElementById('step-badge').textContent = `Step ${step+1} of ${STEPS.length}`;
+  document.getElementById('step-title').textContent = s.title;
+  document.getElementById('step-desc').textContent = s.desc;
+  actionBtn.textContent = s.btn; actionBtn.disabled = false; actionBtn.className = '';
+  backBtn.disabled = step === 0;
+  document.getElementById('progress-fill').style.width = (step/(STEPS.length-1)*100) + '%';
   document.querySelectorAll('.check-item').forEach(el => {
-    const k = el.dataset.key;
-    el.classList.remove('done', 'active');
-    if (doneKeys.has(k)) {
-      el.classList.add('done');
-      el.querySelector('.check-icon').textContent = '✓';
-    } else if (k === s.key) {
-      el.classList.add('active');
-      el.querySelector('.check-icon').textContent = '';
-    } else {
-      el.querySelector('.check-icon').textContent = '';
-    }
+    const si = +el.dataset.step;
+    el.classList.toggle('done', si < step);
+    el.classList.toggle('active', si === step);
+    el.querySelector('.check-icon').textContent = si < step ? '✓' : '';
   });
 }
 
-document.getElementById('action-btn').addEventListener('click', () => {
-  const s = STEPS[currentStep];
-  if (s.action) s.action();
-  if (s.key) doneKeys.add(s.key);
-
-  if (currentStep < STEPS.length - 1) {
-    currentStep++;
-    updatePanel();
-  } else {
-    const btn = document.getElementById('action-btn');
-    btn.textContent = 'All built! 🎉';
-    btn.disabled = true;
-    document.getElementById('progress-fill').style.width = '100%';
+actionBtn.addEventListener('click', () => {
+  const s = STEPS[step];
+  if (s.interactive) {
+    actionBtn.disabled = true; actionBtn.className = 'waiting';
+    actionBtn.textContent = 'Click near the rings…';
+    startDrilling(s.interactive, () => { toast('All cleats secured ✓', 'hit'); advance(); });
+    return;
   }
+  if (s.action) s.action();
+  advance();
 });
 
-// ─── RENDER LOOP ─────────────────────────────────────────────────────────────
-let last = performance.now();
+function advance() {
+  if (step < STEPS.length - 1) { step++; render(); }
+  else {
+    actionBtn.textContent = 'All built! 🎉'; actionBtn.disabled = true;
+    document.getElementById('progress-fill').style.width = '100%';
+    document.querySelectorAll('.check-item').forEach(el => {
+      el.classList.remove('active'); el.classList.add('done'); el.querySelector('.check-icon').textContent = '✓';
+    });
+    playMode = true;
+    viewport.classList.add('playmode');
+    focusCamera([8, 56, 185], [0, 46, 12], 1.3);   // pull back to frame whole closet + doors
+    showHint('Play mode — drag the doors to slide them open & closed');
+  }
+}
 
+// Jump to an earlier step: reset, then replay effects instantly up to target
+function jumpTo(target) {
+  resetAll();
+  for (let i = 1; i <= target; i++) {
+    const s = STEPS[i];
+    if (s.interactive) instantComplete(s.interactive);
+    else if (s.action) replayInstant(i);
+  }
+  step = target; render();
+}
+function replayInstant(i) {
+  if (i === 1) { doorFront.position.x = doorFront.userData.openX; controls.target.set(LB_CX, 34, 12); }
+  if (i === 2) tapeMarks.forEach(t => t.visible = true);
+  if (i === 3) studMeshes.forEach(s => s.visible = true);
+  if (i === 6) shelves.forEach(sh => { sh.visible = true; sh.position.y = sh.userData.targetY; });
+}
+function instantComplete(kind) {
+  cleatRows.forEach(row => {
+    if (kind==='back') { row.back.visible = true; row.back.material = cleatSolid; }
+    if (kind==='side') { row.left.visible = true; row.right.visible = true; row.left.material = cleatSolid; row.right.material = cleatSolid; }
+    row.targets.filter(t=>t.userData.kind===kind).forEach(t => { t.userData.placed = true; t.visible = false; });
+  });
+}
+function resetAll() {
+  drillActive = false; viewport.classList.remove('drilling'); hideCounter(); tweens.length = 0;
+  playMode = false; endDoorDrag(); controls.enabled = true; hintEl.classList.add('fade');
+  viewport.classList.remove('playmode', 'grabbing');
+  pantryItems.forEach(m => bay.remove(m)); pantryItems.length = 0;
+  closeDoors();
+  tapeMarks.forEach(t => t.visible = false);
+  studMeshes.forEach(s => s.visible = false);
+  drivenScrews.forEach(s => bay.remove(s)); drivenScrews.length = 0;
+  cleatRows.forEach(row => {
+    row.back.visible=false; row.back.material = cleatGhost.clone();
+    row.left.visible=false; row.left.material = cleatGhost.clone();
+    row.right.visible=false; row.right.material = cleatGhost.clone();
+    row.targets.forEach(t => { t.userData.placed = false; t.visible = false; });
+  });
+  shelves.forEach((sh,i) => { sh.visible=false; sh.position.y = sh.userData.targetY + 34 + i*4; });
+}
+
+backBtn.addEventListener('click', () => { if (step > 0) jumpTo(step - 1); });
+document.querySelectorAll('.check-item').forEach(el => {
+  el.addEventListener('click', () => { const t = +el.dataset.step; if (t < step) jumpTo(t); });
+});
+
+// ─── LOOP ────────────────────────────────────────────────────────────────────
+let last = performance.now();
 function animate(now) {
   requestAnimationFrame(animate);
-  const dt = Math.min((now - last) / 1000, 0.05);
-  last = now;
-
-  // Process tweens
-  for (let i = tweens.length - 1; i >= 0; i--) {
+  const dt = Math.min((now-last)/1000, 0.05); last = now;
+  for (let i = tweens.length-1; i >= 0; i--) {
     const tw = tweens[i];
-    if (tw.custom) {
-      const done = tw.update(dt);
-      if (done) tweens.splice(i, 1);
-    } else {
-      tw.elapsed += dt;
-      if (tw.elapsed < tw.delay) continue;
-      const t = Math.min((tw.elapsed - tw.delay) / tw.duration, 1);
-      tw.obj[tw.prop] = tw.from + (tw.to - tw.from) * easeOutCubic(t);
-      if (t >= 1) {
-        tw.obj[tw.prop] = tw.to;
-        if (tw.onDone) tw.onDone();
-        tweens.splice(i, 1);
-      }
-    }
+    if (tw.custom) { if (tw.update(dt)) tweens.splice(i,1); continue; }
+    tw.t = Math.min(tw.t + dt/tw.dur, 1);
+    tw.obj[tw.prop] = tw.from + (tw.to-tw.from)*tw.ease(tw.t);
+    if (tw.t >= 1) tweens.splice(i,1);
   }
-
+  if (drillActive) {
+    const p = 1 + Math.sin(now*0.006)*0.2;
+    activeTargets.forEach(t => { if (!t.userData.placed) t.scale.setScalar(p); });
+  }
   controls.update();
   renderer.render(scene, camera);
 }
-
-// ─── RESIZE ──────────────────────────────────────────────────────────────────
 window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
 });
 
-// ─── INIT ────────────────────────────────────────────────────────────────────
-updatePanel();
+render();
 animate(performance.now());
-
-// Fade hint after 6s
 setTimeout(() => document.getElementById('hint').classList.add('fade'), 6000);
+
+// debug hook (harmless; handy for testing the play-mode interactions)
+window.__sim = {
+  enterPlay(){ playMode = true; viewport.classList.add('playmode'); },
+  doorX(){ return [+doorFront.position.x.toFixed(2), +doorBack.position.x.toFixed(2)]; },
+  doorScreen(which='back'){ const v = new THREE.Vector3();
+    (which==='front'?doorFront:doorBack).getWorldPosition(v); v.project(camera);
+    return [(v.x*0.5+0.5)*innerWidth, (-v.y*0.5+0.5)*innerHeight]; },
+};
 </script>
 </body>
 </html>
