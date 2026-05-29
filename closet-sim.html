@@ -734,15 +734,15 @@ const lerp = (a,b,u) => a + (b-a)*u;
 
 // camera keyframes: time (s), position, look-at target
 const tourKeys = [
-  { t:0,    p:[64, 80, 205],       g:[0, 50, 10] },          // wide, doors closed
-  { t:3,    p:[34, 60, 150],       g:[-10, 46, 10] },        // drift in as doors open
-  { t:5.4,  p:[LB_CX+8, 52, 96],   g:[LB_CX, 42, 10] },      // into the bay
-  { t:9,    p:[LB_CX-20, 41, 82],  g:[LB_CX, 36, 12] },      // orbit left (drilling)
-  { t:12.2, p:[LB_CX+22, 45, 80],  g:[LB_CX, 36, 12] },      // orbit right
-  { t:15,   p:[LB_CX+4, 51, 94],   g:[LB_CX, 40, 11] },      // settle (shelves)
-  { t:18,   p:[LB_CX+12, 46, 80],  g:[LB_CX, 36, 12] },      // push in (pantry)
-  { t:21,   p:[44, 72, 200],       g:[0, 52, 10] },          // pull back reveal
-  { t:25,   p:[-34, 66, 208],      g:[0, 52, 10] },          // slow final orbit
+  { t:0,    p:[60, 78, 200],      g:[0, 50, 10] },           // wide, doors closed
+  { t:1.4,  p:[30, 58, 138],      g:[-12, 46, 10] },         // drift in as doors open
+  { t:3.0,  p:[LB_CX+8, 52, 92],  g:[LB_CX, 42, 10] },       // into the bay (tape/studs)
+  { t:5.2,  p:[LB_CX-20, 42, 80], g:[LB_CX, 36, 12] },       // orbit left (drilling)
+  { t:7.6,  p:[LB_CX+22, 46, 80], g:[LB_CX, 36, 12] },       // orbit right
+  { t:9.6,  p:[LB_CX+4, 50, 92],  g:[LB_CX, 40, 11] },       // settle (shelves)
+  { t:12.0, p:[LB_CX+6, 46, 84],  g:[LB_CX, 38, 11] },       // push in (pantry)
+  { t:13.6, p:[LB_CX, 40, 98],    g:[LB_CX, 36, 12] },       // front-on for door finale
+  { t:17.5, p:[LB_CX-3, 41, 102], g:[LB_CX, 36, 12] },       // hold while doors close/open
 ];
 function updateTourCam(dt) {
   tourClock += dt;
@@ -766,12 +766,10 @@ function tourDrill(kind, base){
   });
 }
 const captionEl = document.getElementById('caption');
-function setCaption(main, sub){
+function setCaption(main){
   captionEl.classList.remove('show');
-  setTimeout(() => {
-    captionEl.querySelector('.c').innerHTML = main + (sub ? `<span class="sub">${sub}</span>` : '');
-    captionEl.classList.add('show');
-  }, 160);
+  if (!main) return;
+  setTimeout(() => { captionEl.querySelector('.c').textContent = main; captionEl.classList.add('show'); }, 150);
 }
 function startTour(){
   document.getElementById('intro').classList.add('hidden');
@@ -780,16 +778,17 @@ function startTour(){
   camera.position.set(...tourKeys[0].p); camera.lookAt(...tourKeys[0].g);
   tourActive = true; tourClock = 0;
   const S = (ms, fn) => setTimeout(fn, ms);
-  setCaption('Putting shelves in my closet 🔨');
-  S(2300, () => { doorSlide(); setCaption('Slide the doors open'); });
-  S(4200, () => { tapeMarks.forEach((t,i)=>setTimeout(()=>t.visible=true, i*40)); setCaption('Mark the shelf lines'); });
-  S(5600, () => { studMeshes.forEach((s,i)=>setTimeout(()=>s.visible=true, i*70)); setCaption('Find the studs'); });
-  S(7000, () => { setCaption('Drill the cleats'); tourDrill('back', 0); });
-  S(9300, () => { tourDrill('side', 0); });
-  S(12400, () => { dropShelves(); setCaption('Drop the shelves in'); });
-  S(15400, () => { fillPantry(); setCaption('Stock the pantry'); });
-  S(19200, () => { setCaption('All in 3D — before buying the wood'); });
-  S(21600, () => { setCaption('Built with Claude', 'arielwernick.github.io/apartment'); });
+  // functional step labels mirroring the site's own steps — no marketing copy
+  S(1000,  () => { doorSlide(); setCaption('Slide the doors aside'); });
+  S(2800,  () => { tapeMarks.forEach((t,i)=>setTimeout(()=>t.visible=true, i*30)); setCaption('Mark shelf lines'); });
+  S(4000,  () => { studMeshes.forEach((s,i)=>setTimeout(()=>s.visible=true, i*50)); setCaption('Find studs'); });
+  S(5200,  () => { setCaption('Drill back cleats'); tourDrill('back', 0); });
+  S(6900,  () => { setCaption('Drill side cleats'); tourDrill('side', 0); });
+  S(8800,  () => { dropShelves(); setCaption('Drop shelves in'); });
+  S(11200, () => { fillPantry(); setCaption('Stock the pantry'); });
+  S(13600, () => { setCaption(''); });
+  S(13900, () => { tween(doorFront.position, 'x', doorFront.userData.closedX, 1.1); });  // doors close
+  S(15400, () => { tween(doorFront.position, 'x', doorFront.userData.openX,   1.1); });  // doors open
 }
 
 // ─── LOOP ────────────────────────────────────────────────────────────────────
