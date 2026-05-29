@@ -50,12 +50,38 @@ body { background:#111; font-family:-apple-system,'Helvetica Neue',sans-serif; o
 #toast.miss { background:#C9622E; }
 #drill-counter { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); margin-top:-150px; color:#fff; font-size:13px; font-weight:600; background:rgba(0,0,0,0.5); padding:7px 16px; border-radius:20px; pointer-events:none; opacity:0; transition:opacity 0.3s; }
 #drill-counter.show { opacity:1; }
+
+#intro { position:absolute; inset:0; z-index:20; display:flex; align-items:center; justify-content:center; padding:24px;
+  background:rgba(10,10,10,0.55); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); transition:opacity 0.5s; }
+#intro.hidden { opacity:0; pointer-events:none; }
+#intro-card { max-width:540px; background:#fff; border-radius:18px; padding:38px 40px 32px; box-shadow:0 20px 70px rgba(0,0,0,0.5); }
+#intro-card .eyebrow { font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#5C9E6A; margin-bottom:12px; }
+#intro-card h1 { font-size:30px; font-weight:800; color:#1a1a1a; line-height:1.1; margin-bottom:14px; letter-spacing:-0.02em; }
+#intro-card p { font-size:14.5px; line-height:1.6; color:#555; margin-bottom:14px; }
+#intro-card .meta { font-size:12.5px; color:#999; margin-bottom:24px; }
+#intro-card .meta b { color:#666; font-weight:600; }
+#intro-start { width:100%; padding:14px; background:#2B2B2B; color:#fff; border:none; border-radius:11px; font-size:15px; font-weight:700; cursor:pointer; transition:background 0.15s, transform 0.1s; }
+#intro-start:hover { background:#444; }
+#intro-start:active { transform:scale(0.99); }
+#intro-card .controls { text-align:center; font-size:11.5px; color:#aaa; margin-top:14px; }
 </style>
 </head>
 <body>
 
 <div id="viewport"></div>
 <div id="title-badge">Closet Build Sim — Left Bay</div>
+
+<div id="intro">
+  <div id="intro-card">
+    <div class="eyebrow">Build Sim · Three.js</div>
+    <h1>I rebuilt my closet in 3D before drilling a single hole.</h1>
+    <p>This is my actual apartment pantry closet — measured into a Figma plan, then rebuilt as an interactive 3D model. You walk through the <b>real build, step by step</b>: slide the doors aside, mark the shelf lines, find the studs, drill the cleats into place, and drop in four graduated plywood shelves.</p>
+    <p>Then stock the pantry and slide the doors around the finished closet — a dry run for the weekend project.</p>
+    <p class="meta"><b>92" × 99" × 29.5"</b> closet · 4 cleat-mounted shelves · one self-contained HTML file</p>
+    <button id="intro-start">Explore the closet →</button>
+    <div class="controls">Drag to orbit · scroll to zoom · right-drag to pan</div>
+  </div>
+</div>
 
 <div id="panel">
   <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
@@ -673,6 +699,11 @@ window.addEventListener('resize', () => {
 render();
 animate(performance.now());
 setTimeout(() => document.getElementById('hint').classList.add('fade'), 6000);
+
+// intro overlay dismiss
+document.getElementById('intro-start').addEventListener('click', () => {
+  document.getElementById('intro').classList.add('hidden');
+});
 
 // debug hook (harmless; handy for testing the play-mode interactions)
 window.__sim = {
